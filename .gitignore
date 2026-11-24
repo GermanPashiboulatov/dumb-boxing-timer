@@ -1,0 +1,25 @@
+# Google Play signing key
+app/android/keystore/
+
+# build output
+app/build/
+app/android/build/
+app/android/app/build/
+.gradle/
+local.properties
+*.apk
+*.aab
+
+# Gong 1 and Gong 2 from Zvukipro.com: the site does not allow redistributing its files
+concepts/sounds/
+app/web/gongs.js
+
+# working materials
+concepts/backup/
+concepts/icon/rejected/
+concepts/concepts-AB.html
+concepts/concept-C-codex.html
+store/play-console-answers.md
+store/screenshots-1.0/
+BACKLOG.md
+.claude/

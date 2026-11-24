@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="icon_bg">#0C0D10</color>
+    <string name="app_name">Dumb Boxing Timer</string>
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0F1012</item>
+        <item name="android:statusBarColor">#0F1012</item>
+        <item name="android:navigationBarColor">#0F1012</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
+    </style>
+</resources>

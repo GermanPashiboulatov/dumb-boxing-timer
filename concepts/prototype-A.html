@@ -1,0 +1,1388 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dumb Boxing Timer: прототип A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Noto+Sans+SC:wght@500;700&family=Fira+Sans+Extra+Condensed:wght@700&family=Jost:wght@600&family=Oswald:wght@600&family=Unbounded:wght@700&family=JetBrains+Mono:wght@700&family=Russo+One&family=Rubik:wght@700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+:root{--board:#e7e7e3;--ink:#1d1f22;--muted:#62666c;--red:#e3392d;--orange:#f28a1e;--blue:#2e8de6;--prep:#d8d3c6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--board);color:var(--ink);font-family:"Golos Text",system-ui,sans-serif;padding:40px 16px 80px}
+.wrap{max-width:1400px;margin:0 auto}
+h1{font-family:"Fira Sans Extra Condensed";font-weight:700;font-size:44px;line-height:1}
+.lead{margin-top:12px;color:var(--muted);line-height:1.5;max-width:780px}
+h2{font-family:"Fira Sans Extra Condensed";font-weight:700;font-size:32px;line-height:1;margin:64px 0 10px}
+.note{color:var(--muted);line-height:1.5;max-width:780px;margin-bottom:20px;font-size:15px}
+.live{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;margin-top:32px}
+.devcol{display:grid;gap:12px;justify-items:start}
+.devcol .cap{font-size:13px;color:var(--muted);max-width:360px;line-height:1.4}
+.devcol .cap b{color:var(--ink);display:block;font-size:14px}
+.scaler{transform-origin:top left}
+.testbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:14px}
+.testbar button{font:inherit;border:0;border-radius:999px;padding:8px 14px;background:#d3d3ce;color:var(--ink);cursor:pointer}
+.testbar button.on{background:var(--ink);color:#f1f0ec}
+.row{display:flex;flex-wrap:wrap;gap:24px 20px;align-items:flex-start}
+figure{display:grid;gap:8px;justify-items:start}
+figcaption{font-size:12.5px;color:var(--muted);max-width:300px;line-height:1.35}
+figcaption b{color:var(--ink);font-weight:600;display:block;font-size:13.5px}
+.fontrow{margin-top:28px}
+.fontrow h3{font-size:17px;font-weight:600;margin-bottom:12px;display:flex;gap:10px;align-items:baseline}
+.fontrow h3 span{font-size:13px;color:var(--muted);font-weight:400}
+.okb{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#cfe6d3;color:#1d4d27}
+.badb{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#f3d0cc;color:#7a1c13}
+table.sum{border-collapse:collapse;margin-top:8px;font-size:14px}
+table.sum th,table.sum td{padding:8px 14px;text-align:left}
+table.sum thead th{font-weight:600;color:var(--muted);font-size:13px}
+table.sum tbody tr:nth-child(odd){background:#deded9}
+.issues{font-size:13px;color:#7a1c13;margin-top:8px;line-height:1.5;max-width:900px}
+.icons{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-end}
+.icons img{width:180px;height:180px;border-radius:40px;display:block;box-shadow:0 16px 40px -18px rgba(40,44,52,.5)}
+.icons .sm img{width:64px;height:64px;border-radius:15px}
+
+/* device frames */
+.phone{width:300px;height:733px;border-radius:38px;padding:7px;background:#2a2c30;box-shadow:0 20px 50px -20px rgba(40,44,52,.45);flex:none}
+.cover{width:300px;height:312px;border-radius:44px;padding:7px;background:#2a2c30;box-shadow:0 20px 50px -20px rgba(40,44,52,.45);flex:none}
+.scr{position:relative;width:286px;height:719px;border-radius:32px;overflow:hidden}
+.cover .scr{height:298px;border-radius:38px}
+.cam{position:absolute;right:0;bottom:0;width:112px;height:66px;background:#2a2c30;border-top-left-radius:30px;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;padding:6px 0 0 6px}
+.cam i{width:40px;height:40px;border-radius:50%;background:#111214;border:3px solid #3a3d42;display:block}
+.punch{position:absolute;top:10px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#050506;z-index:5}
+
+/* app */
+.A{--qk:#2e8de6;--bg:#0f1012;--s1:#191b1e;--s2:#24272b;--tx:#f1f0ec;--tx2:#8e939a;font-family:"Golos Text","Noto Sans SC",sans-serif;color:var(--tx);background:var(--bg);user-select:none;-webkit-user-select:none}
+.A .df{font-family:var(--df);font-weight:var(--dw)}
+.A .dg{position:absolute;left:0;right:0;text-align:center;line-height:1;white-space:nowrap}
+.A .dg .c{display:inline-block;text-align:center}
+.A .bar{position:absolute;top:30px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.A .bar .t{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden}
+.A .ico{width:40px;height:40px;border-radius:12px;background:var(--s1);display:grid;place-items:center;font-size:20px;color:var(--tx);cursor:pointer;flex:none}
+.A .menu{position:absolute;top:84px;left:16px;right:16px;display:grid;gap:10px}
+.A .field{background:var(--s1);border-radius:16px;padding:12px 16px 14px}
+.A .field .lab{display:flex;justify-content:space-between;align-items:center;gap:10px;height:40px}
+.A .field .lab .ln{font-size:14px;color:var(--tx2);font-weight:500;white-space:nowrap;overflow:hidden}
+.A .field .val{font-size:38px;line-height:1;cursor:text;white-space:nowrap;border-bottom:2px solid transparent;padding:0 2px}
+.A .field .val input{font:inherit;color:inherit;background:transparent;border:0;outline:0;width:88px;text-align:right}
+.A .field.edit .val{border-bottom-color:var(--red)}
+.A .sl{position:relative;height:30px;margin-top:4px;touch-action:none;cursor:pointer}
+.A .sl .tr{position:absolute;left:0;right:0;top:12px;height:6px;border-radius:3px;background:var(--s2)}
+.A .sl .f{position:absolute;left:0;top:12px;height:6px;border-radius:3px;background:var(--tx)}
+.A .sl .mk{position:absolute;top:22px;width:2px;height:5px;margin-left:-1px;background:#3a3e44;border-radius:1px}
+.A .sl .k{position:absolute;top:15px;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:var(--tx);box-shadow:0 0 0 5px var(--s1);transition:transform .08s}
+.A .sl .k.snap{transform:scale(1.18)}
+.A .sl .k.fine{background:var(--orange)}
+.A .finehint{position:absolute;right:0;top:-2px;font-size:11px;color:var(--orange);display:none;white-space:nowrap}
+.A .sl.finemode .finehint{display:block}
+.A .presets{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px}
+.A .presets span{text-align:center;padding:6px 0;border-radius:9px;background:var(--s2);font-size:12px;font-weight:600;letter-spacing:-.02em;cursor:pointer;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.A .presets span.on{background:var(--tx);color:var(--bg)}
+.A .total{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2px 4px 0;font-size:14px;color:var(--tx2)}
+.A .total b{color:var(--tx);font-size:20px}
+.A .start{position:absolute;left:16px;right:16px;bottom:26px;height:68px;border-radius:999px;background:var(--red);color:#fff;font-size:28px;letter-spacing:.06em;display:grid;place-items:center;cursor:pointer;white-space:nowrap;overflow:hidden}
+.A .phase{position:absolute;top:56px;left:18px;right:18px;text-align:center;white-space:nowrap;letter-spacing:.12em;line-height:1.1}
+.A .ringbox{position:absolute}
+.A .ringbox svg{position:absolute;inset:0;overflow:visible}
+.A .sub{position:absolute;left:0;right:0;text-align:center;font-size:14px;color:var(--tx2);white-space:nowrap;line-height:16px}
+.A .rounds{position:absolute;left:20px;right:20px;top:406px}
+.A .rounds .rl{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.A .rounds .rl .rn{font-size:52px;line-height:1;white-space:nowrap}
+.A .rounds .rl .rn em{font-style:normal;color:var(--tx2);font-size:28px}
+.A .rounds .rl .rx{font-size:14px;color:var(--tx2);white-space:nowrap;text-align:right}
+.A .ticks{display:grid;gap:3px;margin-top:12px}
+.A .ticks i{height:8px;border-radius:2px;background:var(--s2)}
+.A .ctrls{position:absolute;left:16px;right:16px;bottom:26px;display:grid;grid-template-columns:1fr 2fr;gap:10px}
+.A .btn{height:72px;border-radius:999px;display:grid;place-items:center;font-size:30px;background:var(--s1);color:var(--tx);cursor:pointer}
+.A .btn.main{background:var(--tx);color:var(--bg)}
+.A .scroll{position:absolute;top:84px;left:0;right:0;bottom:0;overflow-y:auto;padding:0 16px 24px;scrollbar-width:none}
+.A .grp{margin-bottom:16px}
+.A .grp h4{font-size:13px;font-weight:600;color:var(--tx2);padding:0 4px 8px}
+.A .list{background:var(--s1);border-radius:16px;overflow:hidden}
+.A .it{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;min-height:56px;cursor:pointer}
+.A .it + .it{box-shadow:inset 0 1px 0 var(--s2)}
+.A .it .l{font-size:15px;line-height:1.25;min-width:0}
+.A .it .l small{display:block;color:var(--tx2);font-size:12.5px;margin-top:2px}
+.A .it2{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:12px 14px}
+.A .it2 + .it,.A .it + .it2,.A .it2 + .it2{box-shadow:inset 0 1px 0 var(--s2)}
+.A .it2 .l{font-size:15px;line-height:1.25;min-width:0}
+.A .it2 small{color:var(--tx2);font-size:12.5px;line-height:1.3;min-width:0}
+.A .chip{white-space:nowrap;font-size:16px;font-weight:600;background:var(--s2);border-radius:10px;padding:5px 10px;font-variant-numeric:tabular-nums}
+.A .tg{display:block;width:46px;height:28px;border-radius:999px;background:var(--s2);position:relative;flex:none}
+.A .tg::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--tx2);transition:left .15s}
+.A .tg.on{background:var(--red)}
+.A .tg.on::after{left:21px;background:#fff}
+.A .rgt{display:flex;gap:8px;align-items:center;flex:none}
+.A .seg{display:flex;gap:4px;background:var(--s2);border-radius:12px;padding:3px}
+.A .seg span{padding:6px 7px;border-radius:9px;font-size:14px;font-weight:600;white-space:nowrap}
+.A .seg span.on{background:var(--tx);color:var(--bg)}
+.A .play{width:40px;height:40px;border-radius:50%;background:var(--s2);display:grid;place-items:center;font-size:16px;flex:none}
+.A .fsample{font-size:30px;line-height:1;white-space:nowrap}
+.A .fname{font-size:14px;color:var(--tx2);white-space:nowrap}
+.A .chk{font-size:22px;color:var(--red)}
+.A .beep{position:absolute;border-radius:50%;border:2px solid var(--orange);opacity:.35;pointer-events:none}
+.A .pulse{animation:pulse .35s ease-out}
+@keyframes pulse{0%{transform:scale(1.035)}100%{transform:scale(1)}}
+/* cover */
+.A .cph{position:absolute;left:20px;top:18px;white-space:nowrap;letter-spacing:.1em;line-height:1.1}
+.A .crd{position:absolute;right:20px;top:14px;font-size:30px;line-height:1;white-space:nowrap}
+.A .crd em{font-style:normal;color:var(--tx2);font-size:18px}
+.A .cleft{position:absolute;left:14px;top:132px;font-size:34px;color:var(--tx2)}
+.A .cset{position:absolute;left:14px;right:14px;top:14px;display:grid;gap:4px}
+.A .crow{display:flex;align-items:center;justify-content:space-between;gap:8px;height:50px;padding:0 5px 0 14px;background:var(--s1);border-radius:14px}
+.A .crow .cl{display:grid;gap:3px;min-width:0}
+.A .crow .cl small{font-size:11.5px;color:var(--tx2);white-space:nowrap;overflow:hidden;line-height:1.1}
+.A .crow .cl b{font-size:24px;line-height:1;white-space:nowrap;font-weight:inherit}
+.A .stp{display:flex;gap:5px;flex:none}
+.A .stp span{width:52px;height:40px;border-radius:11px;background:var(--s2);display:grid;place-items:center;font-size:20px;touch-action:none;cursor:pointer}
+.A .stp span:active{background:#3a3e44}
+.A .cgear{position:absolute;left:14px;bottom:14px;width:44px;height:44px;border-radius:14px;background:var(--s1);display:grid;place-items:center;font-size:22px;color:var(--tx);cursor:pointer}
+.A .cstop{position:absolute;left:14px;bottom:14px;width:60px;height:56px;border-radius:16px;background:var(--s1);display:grid;place-items:center;font-size:26px;color:var(--tx);cursor:pointer}
+.A .cok{position:absolute;left:14px;right:124px;bottom:14px;height:48px;border-radius:999px;background:var(--tx);color:var(--bg);display:grid;place-items:center;font-size:20px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;cursor:pointer}
+/* горизонталь внутреннего экрана (scrLand): меню с ползунками в три колонки — поля 2×2, справа итог и СТАРТ */
+.A .land{position:absolute;inset:0}
+.A .land .bar{top:16px;left:16px;right:16px}
+.A .land .menu{top:68px;left:16px;right:16px;grid-template-columns:1fr 1fr 200px;align-items:start}
+.A .land .menu>.total{grid-column:3;grid-row:1;flex-direction:column;align-items:flex-end;gap:4px;padding:8px 4px 0}
+.A .land .menu>.total b{font-size:30px}
+.A .land .start{left:auto;right:16px;width:200px;bottom:24px}
+.A .bar .rgt{gap:8px}
+.A .ico.off{color:var(--red)}
+/* ===== css: тема ===== */
+.A .start{background:var(--start,var(--red));color:var(--startTx,#fff)}
+/* экран тренировки: обёртка (в ней заливка) и раскладка круга */
+.A .runscr{position:absolute;inset:0}
+.A .runlay{position:absolute;left:0;right:0;top:34px;bottom:110px;display:grid;justify-items:center}
+.A .runlay .phase,.A .runlay .rounds,.A .runlay .ringbox{position:relative;top:auto;left:auto;right:auto}
+.A .runlay .phase{width:250px}
+.A .runlay .rounds{width:246px}
+.A .runlay.mid{grid-template-rows:1fr auto 1fr}
+.A .runlay.mid .phase{grid-row:1;align-self:end;margin-bottom:14px}
+.A .runlay.mid .ringbox{grid-row:2}
+.A .runlay.mid .rounds{grid-row:3;align-self:start;margin-top:18px}
+.A .runlay.top{grid-template-rows:auto 1fr auto auto}
+.A .runlay.top .ringbox{grid-row:1;margin-top:8px}
+.A .runlay.top .rounds{grid-row:3;margin-bottom:18px}
+.A .runlay.top .phase{grid-row:4;margin-bottom:2px}
+/* экраны темы */
+.A .thdots{display:flex;gap:4px}
+.A .thdots i{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(128,128,128,.4)}
+.A .thsw{width:26px;height:26px;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1.5px rgba(128,128,128,.45)}
+.A .thprev{height:76px;border-radius:16px;display:grid;place-items:center;font-size:30px;margin-bottom:12px;box-shadow:inset 0 0 0 1.5px rgba(128,128,128,.35)}
+.A .thprev b{font-weight:var(--dw)}
+.A .thpal{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:0 2px 14px}
+.A .thpal span{height:34px;border-radius:10px;cursor:pointer;box-shadow:inset 0 0 0 1.5px rgba(128,128,128,.35)}
+.A .thpal span.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--tx)}
+.A .thsl{padding:6px 0}
+.A .thsl-l{display:flex;justify-content:space-between;align-items:center;gap:10px;height:20px;font-size:14px;color:var(--tx2)}
+.A .thsl-l span{white-space:nowrap;overflow:hidden;min-width:0}
+.A .thsl-l b{color:var(--tx);font-weight:600;font-variant-numeric:tabular-nums}
+.A .thtr{position:relative;height:28px;border-radius:14px;margin-top:6px;touch-action:none;cursor:pointer}
+.A .thtr i{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(0,0,0,.55);pointer-events:none}
+.A .threset{margin-top:14px;height:52px;line-height:52px;border-radius:999px;background:var(--s1);text-align:center;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;padding:0 14px}
+/* ===== конец css: тема ===== */
+/* ===== css: звуки ===== */
+.A .it.us{justify-content:flex-start;gap:8px;cursor:default}
+.A .us .un{flex:1;min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.A .us .rgt{margin-left:auto;gap:2px}
+.A .uic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:19px;color:var(--tx2);cursor:pointer;flex:none}
+.A .uic.uplus{background:var(--s2);color:var(--tx)}
+.A .udel{background:var(--red);color:#fff;border-radius:10px;padding:7px 10px;font-size:14px;font-weight:600;white-space:nowrap;cursor:pointer}
+.A .uname{flex:1;min-width:0;font:inherit;font-size:15px;color:var(--tx);background:var(--s2);border:0;outline:0;border-radius:10px;padding:8px 10px;user-select:text;-webkit-user-select:text}
+.A .uerr{color:var(--red)}
+.A .it[data-pick*=":u:"] .l span[data-ovf]{overflow-wrap:anywhere}
+/* ===== конец css: звуки ===== */
+/* ===== css: таймеры ===== */
+/* риски линейки: минутные чуть заметнее */
+.A .sl .mk.mj{height:7px;background:#50555c}
+/* кнопки быстрого выбора: голубые, выбранная залита */
+.A .presets.qk span{background:var(--s2);background:color-mix(in srgb,var(--qk) 24%,var(--s1));color:var(--qk);color:color-mix(in srgb,var(--qk) 55%,#fff)}
+.A .presets.qk span.on{background:var(--qk);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+/* плотное меню, когда кнопки включены у двух и больше полей */
+.A .menu.dense{gap:7px}
+.A .menu.dense .field{padding:8px 14px 9px}
+.A .menu.dense .field .lab{height:34px}
+.A .menu.dense .field .val{font-size:34px}
+.A .menu.dense .sl{height:27px;margin-top:2px}
+.A .menu.dense .presets{margin-top:3px}
+.A .menu.dense .presets span{padding:5px 0}
+.A .menu.dense .total{padding-top:0}
+/* ввод с клавиатуры: часы : минуты : секунды поверх поля */
+.A .field{position:relative}
+.A .kb{position:absolute;inset:0;z-index:3;background:var(--s1);border-radius:16px;box-shadow:inset 0 0 0 2px var(--red);display:flex;align-items:center;justify-content:center;gap:4px;padding:0 10px}
+.A .kb .kbu{display:grid;justify-items:center;gap:3px}
+.A .kb input{font-family:var(--df);font-weight:var(--dw);font-size:30px;line-height:1;color:var(--tx);background:var(--s2);border:0;outline:0;border-radius:10px;text-align:center;padding:5px 0;width:54px}
+.A .kb input:focus{box-shadow:inset 0 0 0 2px var(--tx2)}
+.A .kb small{font-size:11px;color:var(--tx2);white-space:nowrap;line-height:1}
+.A .kb .kbc{font-size:26px;color:var(--tx2);padding-bottom:14px}
+.A .kb .kbok{width:40px;height:40px;border-radius:50%;background:var(--tx);color:var(--bg);display:grid;place-items:center;font-size:20px;margin-left:6px;cursor:pointer;flex:none}
+/* экран «Значения таймеров» */
+.A .tst{display:flex;align-items:center;gap:4px;flex:none}
+.A .tst > span{width:30px;height:34px;border-radius:10px;background:var(--s2);display:grid;place-items:center;font-size:15px;cursor:pointer}
+.A .tst > b{min-width:56px;text-align:center;font-weight:600;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:text;padding:5px 2px;border-radius:9px}
+.A .tst input,.A .tqg input{font:inherit;color:inherit;background:transparent;border:0;outline:0;width:100%;text-align:center}
+.A .tqg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:2px 14px 14px}
+.A .tqg span{text-align:center;padding:8px 0;border-radius:10px;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;cursor:text;background:var(--s2);background:color-mix(in srgb,var(--qk) 24%,var(--s1));color:var(--tx)}
+.A .tqh{padding:0 14px 6px;font-size:12.5px;color:var(--tx2);line-height:1.3}
+.A .treset{display:grid;place-items:center;height:48px;border-radius:999px;background:var(--s1);font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden}
+/* ===== конец css: таймеры ===== */
+/* ===== css: пресеты ===== */
+.A .pbtn{height:52px;border-radius:999px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:17px;font-weight:600;cursor:pointer;margin-bottom:16px;padding:0 16px}
+.A .pbtn span{white-space:nowrap;overflow:hidden;min-width:0}
+.A .pbtn.cancel{background:var(--s2);color:var(--tx)}
+.A .pslot{background:var(--s1);border-radius:16px;padding:10px 10px 10px 14px;margin-bottom:8px;cursor:pointer;display:grid;gap:6px;box-shadow:inset 0 0 0 2px transparent}
+.A .pslot.pick{box-shadow:inset 0 0 0 2px var(--red)}
+.A .pslot .pnm{display:flex;gap:6px;align-items:center;height:28px;font-size:17px;font-weight:600;min-width:0}
+.A .pslot .pnm .pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.A .pslot .pnm .pno{color:var(--tx2);font-weight:500;flex:none}
+.A .pslot.empty .pnm{font-weight:500;color:var(--tx2)}
+.A .pslot.empty.pick .pnm{color:var(--tx)}
+.A .pslot .pfi{color:var(--red);font-size:18px;flex:none}
+.A .prow{display:flex;justify-content:space-between;align-items:center;gap:6px;height:34px;overflow:hidden}
+.A .pinfo{font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;display:flex;gap:4px;align-items:center;min-width:0}
+.A .pacts{display:flex;gap:4px;flex:none}
+.A .pacts span{width:34px;height:34px;border-radius:10px;background:var(--s2);display:grid;place-items:center;font-size:17px;cursor:pointer}
+.A .pchip{height:34px;padding:0 10px;border-radius:10px;background:var(--s2);display:flex;align-items:center;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;flex:none}
+.A .pchip.red{background:var(--red);color:#fff}
+.A .pin{font:inherit;font-size:16px;font-weight:500;color:var(--tx);background:var(--s2);border:0;outline:0;border-radius:10px;height:34px;padding:0 10px;flex:1;min-width:0;user-select:text;-webkit-user-select:text}
+.A .pok{width:34px;height:34px;border-radius:10px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:17px;flex:none;cursor:pointer}
+.A .pbanner{display:grid;gap:8px;background:var(--s1);border-radius:16px;padding:12px 14px;margin-bottom:16px;box-shadow:inset 4px 0 0 var(--red)}
+.A .pbanner .pbt{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;display:flex;gap:6px;align-items:center;min-width:0}
+.A .pbanner .pbt i{color:var(--red);font-size:18px;flex:none}
+.A .pbanner .pbr{display:grid;gap:8px;justify-items:start;min-width:0}
+.A .pbanner .pbn{max-width:100%}
+.A .pbanner .pbn{font-size:13px;color:var(--tx2);white-space:nowrap;overflow:hidden;min-width:0}
+/* ===== конец css: пресеты ===== */
+@media (prefers-reduced-motion: reduce){.A .pulse{animation:none}.A .sl .k{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Прототип A «Ринг»</h1>
+<p class="lead">Живой прототип: таймер работает, звуки и сигналы настоящие. Справа внешний экран, на нём то же состояние, что на внутреннем. Тап по внешнему экрану: старт, пауза и продолжение. Шрифт, язык и звук на каждое событие меняются в настройках за шестерёнкой.</p>
+
+<div class="live">
+  <div class="devcol">
+    <div id="livePhoneHost"></div>
+    <div class="cap"><b>Внутренний экран</b>Слайдер раунда шагает по 10 секунд с щелчком. Чтобы выставить точно, по 1 секунде, уведите палец вверх от слайдера, не отпуская. Или нажмите на число и наберите, например, 301.</div>
+  </div>
+  <div class="devcol">
+    <div id="liveCoverHost"></div>
+    <div class="cap"><b>Внешний экран</b>Камеры в правом нижнем углу, кольцо их обходит. На паузе слева внизу кнопка стоп.</div>
+    <div class="testbar" style="margin-top:16px"><span>Для проверки:</span><button id="spd">Ускорить ×10</button></div>
+  </div>
+</div>
+
+<h2>Проверка шрифтов на наложения</h2>
+<p class="note">Каждый шрифт прогнан на четырёх языках по всем экранам: меню, раунд, последние секунды, подготовка, отдых, настройки, список шрифтов и внешний экран. Проверка ищет пересечения элементов, текст, вылезающий за свой блок, цифры, задевающие кольцо, и наезд на камеры внешнего экрана. Для цифр взят худший случай: раунд 10:00 и отсчёт с 10 секунд. Размер цифр подбирается под каждый шрифт сам.</p>
+<div id="summary"></div>
+<div class="testbar" style="margin:24px 0 0" id="boardLang"></div>
+<div id="board"></div>
+
+<h2>Иконка</h2>
+<p class="note">Сгенерировал Codex. Справа тот же вариант в размере, как на рабочем столе.</p>
+<div class="icons">
+ <figure><img src="data:image/jpeg;base64,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" alt="Колокол ринга"><figcaption><b>Колокол ринга</b>Выбрана. Колокол с бойком, голубая дуга отдыха.</figcaption></figure>
+ <figure class="sm"><img src="data:image/jpeg;base64,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" alt=""></figure>
+</div>
+</div>
+
+<script src="sounds/gongs.js"></script>
+<script>
+/* ================= data ================= */
+// Gong 1 и Gong 2 (Zvukipro.com) лежат в sounds/gongs.js, которого нет в открытом коде: условия сайта запрещают выкладывать файлы.
+// Без этого файла гонгов нет в списках звуков, а по умолчанию конец раунда gongdeep, конец отдыха bell1.
+const USER_SND=window.USER_SND||null;
+const FONTS=[
+ {id:'fira',name:'Fira Sans Extra Condensed',note:'текущий',css:"'Fira Sans Extra Condensed'",w:700},
+ {id:'jost',name:'Jost',note:'',css:'Jost',w:600},
+ {id:'oswald',name:'Oswald',note:'',css:'Oswald',w:600},
+ {id:'unbounded',name:'Unbounded',note:'',css:'Unbounded',w:700},
+ {id:'mono',name:'JetBrains Mono',note:'',css:"'JetBrains Mono'",w:700},
+ {id:'russo',name:'Russo One',note:'',css:"'Russo One'",w:400},
+ {id:'rubik',name:'Rubik',note:'',css:'Rubik',w:700},
+];
+const FB=",'Noto Sans SC','Golos Text',sans-serif";
+const T={
+ ru:{ok:'Готово',credits:'Гонг 1 и Гонг 2: Zvukipro.com',copy:'Авторские права',sounds:'Звуки',aInterval:'Сигнал каждые',aWarn:'Предупреждение',aCount:'Обратный отсчёт',aEndRound:'Конец раунда',aEndRest:'Конец отдыха',workout:'Тренировка',round:'Раунд',rest:'Отдых',rounds:'Раунды',prep:'До старта',total:'Вся тренировка',start:'СТАРТ',
+  pRound:'РАУНД',pRest:'ОТДЫХ',pPrep:'ПРИГОТОВЬСЯ',pPause:'ПАУЗА',pDone:'ГОТОВО',of:'из',nextR:'дальше раунд',first:'первый раунд',
+  roundW:'раунд',done:'тренировка окончена',signals:'Настройки',during:'Во время раунда',every:'Сигнал каждые',everyS:'короткий бип',
+  warn:'Предупреждение',warnS:'кольцо оранжевое, бип',count:'Обратный отсчёт',countS:'бип каждую секунду',gong:'Гонг',
+  gRound:'Конец раунда',gRest:'Конец отдыха',view:'Вид',font:'Шрифт',lang:'Язык',phone:'Телефон',vibr:'Вибрация с сигналом',
+  awake:'Экран не гаснет',fine:'точно, по 1 с',s:'с',fonts:'Шрифт',tapStart:'тап: старт'},
+ en:{ok:'Done',credits:'Gong 1 and Gong 2: Zvukipro.com',copy:'Credits',sounds:'Sounds',aInterval:'Interval beep',aWarn:'Warning',aCount:'Countdown',aEndRound:'End of round',aEndRest:'End of rest',workout:'Workout',round:'Round',rest:'Rest',rounds:'Rounds',prep:'Get ready',total:'Total time',start:'START',
+  pRound:'ROUND',pRest:'REST',pPrep:'GET READY',pPause:'PAUSED',pDone:'DONE',of:'of',nextR:'next: round',first:'first round',
+  roundW:'round',done:'workout complete',signals:'Settings',during:'During the round',every:'Beep every',everyS:'short beep',
+  warn:'Warning',warnS:'ring turns orange, beep',count:'Countdown',countS:'beep every second',gong:'Gong',
+  gRound:'End of round',gRest:'End of rest',view:'Display',font:'Font',lang:'Language',phone:'Phone',vibr:'Vibrate with signals',
+  awake:'Keep screen on',fine:'fine, 1 s steps',s:'s',fonts:'Font',tapStart:'tap to start'},
+ es:{ok:'Listo',credits:'Gong 1 y Gong 2: Zvukipro.com',copy:'Créditos',sounds:'Sonidos',aInterval:'Pitido periódico',aWarn:'Aviso',aCount:'Cuenta atrás',aEndRound:'Fin del asalto',aEndRest:'Fin del descanso',workout:'Entrenamiento',round:'Asalto',rest:'Descanso',rounds:'Asaltos',prep:'Preparación',total:'Tiempo total',start:'EMPEZAR',
+  pRound:'ASALTO',pRest:'DESCANSO',pPrep:'PREPÁRATE',pPause:'PAUSA',pDone:'FIN',of:'de',nextR:'siguiente: asalto',first:'primer asalto',
+  roundW:'asalto',done:'entrenamiento terminado',signals:'Ajustes',during:'Durante el asalto',every:'Pitido cada',everyS:'pitido corto',
+  warn:'Aviso',warnS:'el anillo se vuelve naranja',count:'Cuenta atrás',countS:'pitido cada segundo',gong:'Gong',
+  gRound:'Fin del asalto',gRest:'Fin del descanso',view:'Pantalla',font:'Fuente',lang:'Idioma',phone:'Teléfono',vibr:'Vibrar con las señales',
+  awake:'Pantalla siempre encendida',fine:'preciso, de 1 s',s:'s',fonts:'Fuente',tapStart:'toca para empezar'},
+ zh:{ok:'完成',credits:'锣声 1 和锣声 2：Zvukipro.com',copy:'版权',sounds:'声音',aInterval:'间隔提示',aWarn:'结束前提醒',aCount:'倒计时',aEndRound:'回合结束',aEndRest:'休息结束',workout:'训练',round:'回合',rest:'休息',rounds:'回合数',prep:'准备时间',total:'总时长',start:'开始',
+  pRound:'回合',pRest:'休息',pPrep:'准备',pPause:'暂停',pDone:'完成',of:'/',nextR:'下一回合',first:'第一回合',
+  roundW:'回合',done:'训练完成',signals:'设置',during:'回合中',every:'间隔提示',everyS:'短提示音',
+  warn:'结束前提醒',warnS:'圆环变橙色并提示',count:'倒计时',countS:'每秒提示一次',gong:'锣声',
+  gRound:'回合结束',gRest:'休息结束',view:'显示',font:'字体',lang:'语言',phone:'手机',vibr:'提示时振动',
+  awake:'屏幕常亮',fine:'精调 1 秒',s:'秒',fonts:'字体',tapStart:'轻触开始'}
+};
+const LANGS=[['ru','RU'],['en','EN'],['es','ES'],['zh','中文']];
+const COL={round:'#e3392d',warn:'#f28a1e',rest:'#2e8de6',prep:'#d8d3c6',pause:'#8e939a',done:'#f1f0ec'};
+const SNDN={
+ user1:{ru:'Гонг 1',en:'Gong 1',es:'Gong 1',zh:'锣声 1'},
+ user2:{ru:'Гонг 2',en:'Gong 2',es:'Gong 2',zh:'锣声 2'},
+ none:{ru:'Без звука',en:'Silent',es:'Sin sonido',zh:'静音'},
+ click:{ru:'Щелчок',en:'Woodblock',es:'Golpe de madera',zh:'木鱼'},
+ beep:{ru:'Бип',en:'Beep',es:'Pitido',zh:'嘀'},
+ dbltick:{ru:'Двойной тик',en:'Double tick',es:'Doble tic',zh:'双嗒'},
+ dblbeep:{ru:'Двойной бип',en:'Double beep',es:'Doble pitido',zh:'双嘀'},
+ trill:{ru:'Трель',en:'Trill',es:'Trino',zh:'颤音'},
+ whistle:{ru:'Свисток',en:'Whistle',es:'Silbato',zh:'哨声'},
+ tick:{ru:'Тик',en:'Tick',es:'Tic',zh:'嗒'},
+ lowbeep:{ru:'Низкий бип',en:'Low beep',es:'Pitido grave',zh:'低音嘀'},
+ bell3:{ru:'Колокол, три удара',en:'Bell, three strikes',es:'Campana, tres golpes',zh:'铃声三响'},
+ bell1:{ru:'Колокол, один удар',en:'Bell, one strike',es:'Campana, un golpe',zh:'铃声一响'},
+ gongdeep:{ru:'Гонг',en:'Gong',es:'Gong',zh:'锣'},
+ horn:{ru:'Гудок',en:'Buzzer',es:'Bocina',zh:'蜂鸣'},
+ dblhit:{ru:'Колокол, два удара',en:'Bell, two strikes',es:'Campana, dos golpes',zh:'铃声两响'},
+};
+const ACTIONS=[
+ {k:'interval',t:'aInterval',opts:['click','beep','dbltick','user1','user2'],short:.9},
+ {k:'warn',t:'aWarn',opts:['dblbeep','trill','whistle','user1','user2'],short:1.2},
+ {k:'count',t:'aCount',opts:['beep','tick','lowbeep','user1','user2'],short:.75},
+ {k:'endRound',t:'aEndRound',opts:['bell3','gongdeep','horn','user1','user2','none']},
+ {k:'endRest',t:'aEndRest',opts:['bell1','gongdeep','dblhit','user1','user2','none']},
+];
+const PRESETS=[20,30,40,60,90,120,180];
+// SL[k] теперь читает диапазон из cfg.lim (см. блок «таймеры»), значения по умолчанию там же.
+const SL=new Proxy({},{get:(o,k)=>lim(k)});
+const CYCLE={every:[15,20,30,45,60],warn:[10,15,20,30],count:[3,5,10]};
+
+const cfg={round:180,rest:60,rounds:12,prep:10,every:30,everyOn:true,warn:10,warnOn:true,count:5,countOn:true,snd:{interval:'click',warn:'dblbeep',count:'beep',endRound:'user2',endRest:'user1'},vibr:false,awake:true,font:'fira',lang:'en'};
+if(!USER_SND){ACTIONS.forEach(a=>{a.opts=a.opts.filter(o=>o!=='user1'&&o!=='user2')});cfg.snd.endRound='gongdeep';cfg.snd.endRest='bell1'}
+
+/* ================= основа: экраны, настройки, сохранение ================= */
+cfg.mute=false;
+const clone=o=>JSON.parse(JSON.stringify(o));
+const DEF=clone(cfg); // значения по умолчанию; функции дописывают свои через addDefaults
+function addDefaults(o){for(const k in o){DEF[k]=clone(o[k]);if(!(k in cfg))cfg[k]=clone(o[k])}}
+function mergeCfg(dst,src){for(const k in src){const v=src[k],d=dst[k];
+  if(v&&typeof v==='object'&&!Array.isArray(v)&&d&&typeof d==='object'&&!Array.isArray(d))mergeCfg(d,v);else dst[k]=clone(v)}return dst}
+function saveCfg(){try{localStorage.setItem('bt_cfg',JSON.stringify(cfg))}catch(e){}}
+function loadCfg(){try{const c=JSON.parse(localStorage.getItem('bt_cfg')||'null');if(c)mergeCfg(cfg,c)}catch(e){}
+  if(!F(cfg.font))cfg.font='fira';if(!T[cfg.lang])cfg.lang='en'}
+// EDIT: объект настроек пресета, пока его редактируют; иначе null. Экраны настроек показывают и меняют tgt().
+let EDIT=null;
+const tgt=()=>EDIT||cfg;
+// Экраны: SCR[id]={html:(c,id)=>'...', back:'id' или (id)=>'id'}. Ключ с двоеточием ('snd:') ловит 'snd:interval'.
+const SCR={};
+const scrOf=id=>SCR[id]||(id.includes(':')?SCR[id.slice(0,id.indexOf(':')+1)]:null);
+function backOf(id){const x=scrOf(id);if(!x||!x.back)return null;return typeof x.back==='function'?x.back(id):x.back}
+// CLICK/PDOWN: обработчики (e)=>true, если событие забрали. EXTRA_VIEWS: (c)=>[{k,title,kind,html,c}] для доски проверки.
+// CHANGE_HOOKS: вызываются после каждого изменения настроек (там же сохраняется cfg).
+const CLICK=[],PDOWN=[],EXTRA_VIEWS=[],CHANGE_HOOKS=[];
+function changed(){saveCfg();CHANGE_HOOKS.forEach(f=>{try{f()}catch(e){console.error(e)}})}
+const caret='<i class="ph ph-caret-right" style="font-size:18px;color:var(--tx2)"></i>';
+const backBar=(title)=>`<div class="bar"><span class="ico" data-act="back"><i class="ph ph-arrow-left"></i></span><span class="t" data-ovf>${title}</span><span style="width:40px;flex:none"></span></div>`;
+Object.assign(T.ru,{theme:'Тема',timersM:'Значения таймеров'});
+Object.assign(T.en,{theme:'Theme',timersM:'Timer ranges'});
+Object.assign(T.es,{theme:'Tema',timersM:'Rangos de tiempo'});
+Object.assign(T.zh,{theme:'主题',timersM:'计时范围'});
+
+/* ================= utils ================= */
+const fmt=s=>{s=Math.max(0,Math.round(s));const p=n=>String(n).padStart(2,'0');return s>=3600?Math.floor(s/3600)+':'+p(Math.floor(s%3600/60))+':'+p(s%60):Math.floor(s/60)+':'+p(s%60)};
+const F=id=>FONTS.find(f=>f.id===id);
+const cv=document.createElement('canvas').getContext('2d');
+const MET={};
+function metrics(f){
+  if(MET[f.id])return MET[f.id];
+  cv.font=`${f.w} 100px ${f.css}${FB}`;
+  let dAdv=0;for(const d of '0123456789')dAdv=Math.max(dAdv,cv.measureText(d).width);
+  const cAdv=cv.measureText(':').width;
+  const m=cv.measureText('0123456789');
+  const asc=m.actualBoundingBoxAscent,desc=m.actualBoundingBoxDescent;
+  const fA=m.fontBoundingBoxAscent,fD=m.fontBoundingBoxDescent;
+  const half=(100-(fA+fD))/2, base=half+fA;
+  const inkC=base-(asc-desc)/2;
+  return MET[f.id]={dAdv:dAdv/100,cAdv:cAdv/100,ih:(asc+desc)/100,inkC:inkC/100};
+}
+function textW(text,f,size,ls){cv.font=`${f.w} ${size}px ${f.css}${FB}`;return cv.measureText(text).width+(ls||0)*size*text.length}
+function fitLabel(text,f,max,maxW,ls){let s=max;while(s>9&&textW(text,f,s,ls)>maxW)s-=0.5;return s}
+function units(tpl,m){let u=0;for(const c of tpl)u+=(c===':'?m.cAdv:m.dAdv);return u}
+function fitTime(tpl,f,R,subH,maxPx){
+  const m=metrics(f),u=units(tpl,m),gap=subH?10:0;let lo=8,hi=maxPx;
+  for(let i=0;i<22;i++){const s=(lo+hi)/2,W=s*u,H=s*m.ih+gap+(subH||0);
+    if(Math.hypot(W/2,H/2)<=R*0.95)lo=s;else hi=s;}
+  return Math.floor(lo);
+}
+function cells(text,f){const m=metrics(f);return [...text].map(c=>`<span class="c" style="width:${c===':'?m.cAdv:m.dAdv}em">${c}</span>`).join('')}
+/* digits block centered at (cx,cy) inside a ring box; returns html */
+function timeBlock({text,tpl,f,S,R,sub,maxPx,color}){
+  const subH=sub?16:0,m=metrics(f),size=fitTime(tpl,f,R,subH,maxPx);
+  const gap=sub?10:0,inkH=size*m.ih,C=S/2;
+  const shift=sub?(gap+subH)/2:0, inkCY=C-shift;
+  const top=inkCY-m.inkC*size;
+  const iw=size*units(text,m);
+  let h=`<div class="dg df" data-ink data-cx="${C}" data-cy="${inkCY}" data-iw="${iw}" data-ih="${inkH}" style="font-size:${size}px;top:${top}px;height:${size}px;${color?'color:'+color:''}">${cells(text,f)}</div>`;
+  if(sub)h+=`<div class="sub" data-sub style="top:${inkCY+inkH/2+gap}px">${sub}</div>`;
+  return h;
+}
+function ring(S,stroke,p,color,track){
+  const r=(S-stroke)/2,c=2*Math.PI*r,cx=S/2;
+  return `<svg viewBox="0 0 ${S} ${S}"><circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${track}" stroke-width="${stroke}"/>
+  ${p>0?`<circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${Math.max(0.001,c*p)} ${c}" transform="rotate(-90 ${cx} ${cx})"/>`:''}</svg>`;
+}
+
+/* ================= view model ================= */
+/* v: {screen, phase, idx, left, dur, paused} */
+function phaseInfo(v,c){
+  const t=T[c.lang],COL=colsOf(c); // цвета фаз из настроек (блок «тема»)
+  if(v.phase==='done')return{col:COL.done,label:t.pDone};
+  if(v.paused)return{col:COL.pause,label:t.pPause,base:v.phase};
+  if(v.phase==='prep')return{col:COL.prep,label:t.pPrep};
+  if(v.phase==='rest')return{col:COL.rest,label:t.pRest};
+  const warn=c.warnOn&&v.left<=c.warn;
+  return{col:warn?COL.warn:COL.round,label:t.pRound,warn};
+}
+const isBig=(v,c)=>!v.paused&&v.phase==='round'&&c.countOn&&v.left<=c.count&&v.left>0;
+
+/* ================= screens ================= */
+function scrMenu(c){
+  const t=T[c.lang],f=F(c.font);
+  // один ползунок на все поля: диапазон, шаг, риски и кнопки берутся из c.lim (блок «таймеры»)
+  const fld=(k,lab,val)=>{
+    const p=limPct(k,c[k],c);
+    return `<div class="field" data-field="${k}"><div class="lab"><span class="ln" data-box data-ovf>${lab}</span><span class="val df" data-box data-val="${k}">${val}</span></div>
+    <div class="sl" data-slider="${k}"><div class="tr"></div>${limMarks(k,c)}<div class="f" style="width:${p}%"></div><div class="k" style="left:${p}%"></div><span class="finehint">${t.fine}</span></div>${quickRow(k,c)}</div>`};
+  const total=c.prep+c.rounds*c.round+(c.rounds-1)*c.rest;
+  return `<div class="bar"><span class="t" data-ovf style="font-size:${t.workout.length>11?13:15}px">${t.workout}</span><span class="rgt"><span class="ico ${c.mute?'off':''}" data-act="mute"><i class="ph ${c.mute?'ph-speaker-simple-slash':'ph-speaker-simple-high'}"></i></span><span class="ico" data-act="go:presets"><i class="ph ph-bookmark-simple"></i></span><span class="ico" data-act="settings"><i class="ph ph-gear-six"></i></span></span></div>
+  <div class="menu${LIM_KEYS.filter(k=>limOf(c,k).qOn).length>=2?' dense':''}">
+   ${fld('round',t.round,fmt(c.round))}
+   ${fld('rest',t.rest,fmt(c.rest))}
+   ${fld('rounds',t.rounds,c.rounds)}
+   ${fld('prep',t.prep,fmt(c.prep))}
+   <div class="total"><span data-box data-ovf>${t.total}</span><b class="df" data-box data-tot>${fmt(total)}</b></div>
+  </div>
+  <div class="start df" data-act="start" data-ovf data-box>${t.start}</div>`;
+}
+function scrRun(v,c){
+  const t=T[c.lang],f=F(c.font),pi=phaseInfo(v,c),big=isBig(v,c),COL=colsOf(c),look=runLook(pi.col,c);
+  const S=270,stroke=34,R=S/2-stroke;
+  const ringCol=look?look.fg:pi.col,track=look?look.track:COL.s2,curTick=look?look.cur:pi.col;
+  const p=v.phase==='done'?1:Math.max(0,v.left/v.dur);
+  let text,tpl,sub=null,maxPx=100;
+  if(big){text=String(Math.ceil(v.left));tpl=String(c.count).replace(/\d/g,'8');maxPx=200}
+  else if(v.phase==='done'){text=fmt(0);tpl='0:00';sub=t.done}
+  else{text=fmt(Math.ceil(v.left));tpl=fmt(v.dur);sub=v.phase==='prep'?`${t.first} ${fmt(c.round)}`:`${t.of} ${fmt(v.dur)}`}
+  const lsz=fitLabel(pi.label,f,26,250,.12);
+  const digCol=look?null:(big?pi.col:(v.paused?COL.pause:null));
+  const shown=v.phase==='rest'?v.idx:Math.min(v.idx,c.rounds);
+  const done=v.phase==='rest'||v.phase==='done'?v.idx:v.idx-1;
+  const ticks=Array.from({length:c.rounds},(_,i)=>`<i style="background:${i<done?'var(--tx)':(i===v.idx-1&&v.phase==='round'?curTick:'')}"></i>`).join('');
+  const rx=v.phase==='rest'?`${t.nextR} ${v.idx+1}`:(v.phase==='prep'?'':t.roundW);
+  const beep=pi.warn&&!big?`<div class="beep" style="inset:-12px"></div>`:'';
+  return `<div class="runscr" ${look?`style="${look.style}"`:''}><div class="runlay ${runLayout(c)}">
+  <div class="phase df" data-box style="color:${ringCol};font-size:${lsz}px">${pi.label}</div>
+  <div class="ringbox" data-circle data-r="${S/2}" data-ir="${R}" style="width:${S}px;height:${S}px">${beep}
+    <div class="ringsvg">${ring(S,stroke,p,ringCol,track)}</div>
+    ${timeBlock({text,tpl,f,S,R,sub,maxPx,color:digCol})}</div>
+  <div class="rounds" data-box><div class="rl"><span class="rn df" data-box>${shown}<em> / ${c.rounds}</em></span><span class="rx" data-box>${rx}</span></div>
+   <div class="ticks" style="grid-template-columns:repeat(${c.rounds},1fr);gap:${c.rounds>40?1:3}px">${ticks}</div></div></div>
+  <div class="ctrls" data-box>${v.phase==='done'?`<div class="btn main" style="grid-column:span 2" data-act="menu"><i class="ph ph-arrow-counter-clockwise"></i></div>`:
+   `<div class="btn" data-act="stop"><i class="ph ph-stop"></i></div><div class="btn main" data-act="pause"><i class="ph-fill ${v.paused?'ph-play':'ph-pause'}"></i></div>`}</div></div>`;
+}
+function scrSettings(c){
+  const t=T[c.lang],f=F(c.font);
+  const tg=(k)=>`<span class="tg ${c[k]?'on':''}" data-tg="${k}"></span>`;
+  const row=(l,s,r,act)=>`<div class="it" ${act||''}><div class="l" data-box data-ovf>${l}${s?`<small>${s}</small>`:''}</div><div class="rgt" data-box>${r}</div></div>`;
+  return `${backBar(t.signals)}
+  <div class="scroll">
+   <div class="grp"><div class="list">
+    ${row(t.sounds,'',caret,'data-act="go:sounds"')}
+    ${row(t.theme,'',caret,'data-act="go:theme"')}
+    ${row(t.timersM,'',caret,'data-act="go:timers"')}
+   </div></div>
+   <div class="grp"><h4 data-ovf>${t.view}</h4><div class="list">
+    ${row(t.font,`<span style="font-family:${f.css}${FB};font-weight:${f.w}">${f.name}</span>`,caret,'data-act="fonts"')}
+    <div class="it2" style="grid-template-columns:1fr"><div class="l" data-box data-ovf>${t.lang}</div><div class="seg" data-box style="display:grid;grid-template-columns:repeat(${LANGS.length},1fr)">${LANGS.map(([k,n])=>`<span data-lang="${k}" style="text-align:center" class="${c.lang===k?'on':''}">${n}</span>`).join('')}</div></div>
+   </div></div>
+   <div class="grp"><h4 data-ovf>${t.phone}</h4><div class="list">
+    ${row(t.vibr,'',tg('vibr'))}${row(t.awake,'',tg('awake'))}
+   </div></div>
+   <div class="grp"><h4 data-ovf>${t.copy}</h4><div class="list">
+    ${USER_SND?`<div class="it"><div class="l" data-box data-ovf>${t.credits}</div></div>`:''}
+    <div class="it"><div class="l" data-box style="white-space:normal">Hvala, že ste dostali Dumb Boxing Timer! 🥊🔔😊</div></div>
+   </div></div>
+  </div>`;
+}
+function scrSounds(c){
+  const t=T[c.lang];
+  const tg=(k)=>`<span class="tg ${c[k]?'on':''}" data-tg="${k}"></span>`;
+  const row2=(l,s,chip,k)=>`<div class="it2"><div class="l" data-box data-ovf>${l}</div><div data-box>${tg(k)}</div><small data-box>${s}</small><div data-box>${chip}</div></div>`;
+  const row=(l,s,r,act)=>`<div class="it" ${act||''}><div class="l" data-box data-ovf>${l}${s?`<small>${s}</small>`:''}</div><div class="rgt" data-box>${r}</div></div>`;
+  return `${backBar(t.sounds)}
+  <div class="scroll">
+   <div class="grp"><h4 data-ovf>${t.during}</h4><div class="list">
+    ${row2(t.every,t.everyS,`<span class="chip" data-cyc="every">${fmt(c.every)}</span>`,'everyOn')}
+    ${row2(t.warn,t.warnS,`<span class="chip" data-cyc="warn">${c.warn} ${t.s}</span>`,'warnOn')}
+    ${row2(t.count,t.countS,`<span class="chip" data-cyc="count">${c.count} ${t.s}</span>`,'countOn')}
+   </div></div>
+   <div class="grp"><h4 data-ovf>${t.sounds}</h4><div class="list">
+    ${ACTIONS.map(a=>row(t[a.t],SNDN[c.snd[a.k]][c.lang],caret,`data-act="snd:${a.k}"`)).join('')}
+   </div></div>
+  </div>`;
+}
+function scrFonts(c){
+  const t=T[c.lang];
+  return `<div class="bar"><span class="ico" data-act="back"><i class="ph ph-arrow-left"></i></span><span class="t" data-ovf>${t.fonts}</span><span style="width:40px;flex:none"></span></div>
+  <div class="scroll"><div class="list">${FONTS.map(f=>`<div class="it" data-font="${f.id}" style="min-height:66px"><div class="l" data-box style="display:grid;gap:4px">
+   <span class="fsample" data-ovf style="font-family:${f.css}${FB};font-weight:${f.w}">2:47</span><span class="fname" data-ovf>${f.name}</span></div>
+   <div class="rgt" data-box style="width:24px">${c.font===f.id?'<i class="ph-bold ph-check chk"></i>':''}</div></div>`).join('')}</div></div>`;
+}
+function scrSound(c,k){
+  const t=T[c.lang],a=ACTIONS.find(x=>x.k===k);
+  return `<div class="bar"><span class="ico" data-act="back"><i class="ph ph-arrow-left"></i></span><span class="t" data-ovf>${t[a.t]}</span><span style="width:40px;flex:none"></span></div>
+  <div class="scroll"><div class="list">${a.opts.map(o=>`<div class="it" data-pick="${k}:${o}"><div class="l" data-box style="display:flex;align-items:center;gap:12px">
+   ${o==='none'?'<span class="play" style="opacity:.35"><i class="ph ph-speaker-simple-slash"></i></span>':`<span class="play" data-play="${k}:${o}"><i class="ph-fill ph-play"></i></span>`}
+   <span data-ovf style="min-width:0">${SNDN[o][c.lang]}</span></div>
+   <div class="rgt" data-box style="width:24px">${c.snd[k]===o?'<i class="ph-bold ph-check chk"></i>':''}</div></div>`).join('')}</div></div>`;
+}
+function scrCover(v,c){
+  const t=T[c.lang],f=F(c.font),COL=colsOf(c);
+  // круг строго по центру экрана 286×298; S=170 — самый большой, что не задевает камеры (угол зоны камер в 88.6 px от центра)
+  const S=170,stroke=22,R=S/2-stroke,left=(286-S)/2,top=(298-S)/2;
+  let pi,text,tpl,p,big=false,rd,maxPx=80;
+  if(v.screen!=='run'){pi={col:COL.round,label:t.start};text=fmt(c.round);tpl=text;p=1;rd=`<em>×</em>${c.rounds}`}
+  else{pi=phaseInfo(v,c);big=isBig(v,c);p=v.phase==='done'?1:Math.max(0,v.left/v.dur);
+    if(big){text=String(Math.ceil(v.left));tpl=String(c.count).replace(/\d/g,'8');maxPx=160}
+    else{text=fmt(v.phase==='done'?0:Math.ceil(v.left));tpl=v.phase==='done'?'0:00':fmt(v.dur)}
+    rd=`${v.phase==='rest'?v.idx:Math.min(v.idx,c.rounds)}<em>/${c.rounds}</em>`;}
+  cv.font=`${f.w} 30px ${f.css}${FB}`;const rw=cv.measureText(rd.replace(/<[^>]+>/g,'')).width+8;
+  const lsz=fitLabel(pi.label,f,18,286-40-rw-14,.1);
+  const idle=v.screen!=='run',look=idle?null:runLook(pi.col,c); // заливка (блок «тема»)
+  const digCol=look?null:(big?pi.col:(v.paused?COL.pause:null));
+  return `<div class="runscr" ${look?`style="${look.style}"`:''}><div class="cph df" data-box style="color:${look?look.fg:pi.col};font-size:${lsz}px">${pi.label}</div>
+  <div class="crd df" data-box>${rd}</div>
+  ${v.paused?'<div class="cleft"><i class="ph-fill ph-play"></i></div>':''}
+  <div class="ringbox" data-circle data-r="${S/2}" data-ir="${R}" style="left:${left}px;top:${top}px;width:${S}px;height:${S}px">
+   ${ring(S,stroke,p,idle?'#3a3d42':(look?look.fg:pi.col),look?look.track:COL.s2)}${timeBlock({text,tpl,f,S,R,sub:null,maxPx,color:digCol})}</div>
+  ${idle?'<div class="cgear" data-box data-cact="setup"><i class="ph ph-gear-six"></i></div>':''}
+  ${!idle&&v.paused&&v.phase!=='done'?'<div class="cstop" data-box data-cact="stop"><i class="ph-fill ph-stop"></i></div>':''}
+  <div class="camzone" data-cam style="position:absolute;right:0;bottom:0;width:112px;height:66px"></div></div>`;
+}
+/* ================= горизонталь ================= */
+// Горизонталь внутреннего экрана (в приложении режим 'land'). До старта — то же меню с ползунками,
+// разложенное на широкий экран стилями .A .land; во время тренировки приложение показывает scrCover (круг по центру).
+// Раскладка рассчитана на экран не меньше LAND_W×LAND_H px и не шире LAND_MAXW.
+const LAND_W=760,LAND_H=360,LAND_MAXW=840;
+function scrLand(c){return `<div class="land">${scrMenu(c)}</div>`}
+const CSTEP={round:10,rest:10,rounds:1,prep:5};
+function scrCoverSetup(c){
+  const t=T[c.lang];
+  const row=(k,lab,val)=>`<div class="crow" data-box><div class="cl"><small data-ovf>${lab}</small><b class="df" data-cval="${k}">${val}</b></div><div class="stp"><span data-step="${k}:-1"><i class="ph-bold ph-minus"></i></span><span data-step="${k}:1"><i class="ph-bold ph-plus"></i></span></div></div>`;
+  return `<div class="cset">${row('round',t.round,fmt(c.round))}${row('rest',t.rest,fmt(c.rest))}${row('rounds',t.rounds,c.rounds)}${row('prep',t.prep,fmt(c.prep))}</div>
+  <div class="cok df" data-box data-ovf data-cact="done">${t.ok}</div>
+  <div class="camzone" data-cam style="position:absolute;right:0;bottom:0;width:112px;height:66px"></div>`;
+}
+function phoneHTML(inner,c){const f=F(c.font);return `<div class="phone"><div class="scr A" style="--df:${f.css}${FB};--dw:${f.w};${themeVars(c)}">${inner}<div class="punch"></div></div></div>`}
+function coverHTML(inner,c){const f=F(c.font);return `<div class="cover"><div class="scr A" style="--df:${f.css}${FB};--dw:${f.w};${themeVars(c)}">${inner}<div class="cam"><i></i><i></i></div></div></div>`}
+
+SCR.menu={html:()=>scrMenu(cfg)};
+SCR.settings={html:c=>scrSettings(c),back:'menu'};
+SCR.sounds={html:c=>scrSounds(c),back:'settings'};
+SCR.fonts={html:c=>scrFonts(c),back:'settings'};
+SCR['snd:']={html:(c,id)=>scrSound(c,id.slice(4)),back:'sounds'};
+
+/* ================= функция: тема ================= */
+// Тема: заливка экрана тренировки цветом фазы, положение круга, свои цвета.
+// Цвета лежат в cfg.colors (значит и в пресетах), фазовые берутся через colsOf(c), остальные — CSS-переменными из themeVars(c).
+const THC={scr:['bg','s1','s2','tx','tx2'],ph:['round','warn','rest','prep','pause','done'],btn:['start','qk']};
+addDefaults({fill:'ring',ringPos:'mid',colors:{bg:'#0f1012',s1:'#191b1e',s2:'#24272b',tx:'#f1f0ec',tx2:'#8e939a',
+  round:COL.round,warn:COL.warn,rest:COL.rest,prep:COL.prep,pause:COL.pause,done:COL.done,start:'#e3392d',qk:'#2e8de6'}});
+const THPAL=['#e3392d','#ff6b5e','#f28a1e','#ffc531','#d8d3c6','#f1f0ec','#3fbf6a','#1fa89a','#2e8de6','#5b6cff','#9b5de5','#e85d9b',
+  '#0f1012','#191b1e','#24272b','#3a3d42','#8e939a','#ffffff'];
+const isHex=h=>typeof h==='string'&&/^#[0-9a-f]{6}$/i.test(h);
+function colsOf(c){const d=DEF.colors,x=(c&&c.colors)||{},o={};for(const k in d)o[k]=isHex(x[k])?x[k]:d[k];return o}
+function hexRgb(h){const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255]}
+function lum(h){const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*b}
+// контрастный цвет поверх h: тёмный или белый, у кого контраст больше
+function onColor(h){const L=lum(h);return (L+.05)/.056>1.6*1.05/(L+.05)?'#111214':'#ffffff'} // белый, пока тёмный не заметно контрастнее (красный и синий — белым)
+function rgba(h,a){const[r,g,b]=hexRgb(h);return`rgba(${r},${g},${b},${a})`}
+function hex2hsv(h){const[r,g,b]=hexRgb(h).map(x=>x/255),mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let H=0;
+  if(d){H=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;H*=60;if(H<0)H+=360}
+  return{h:H,s:mx?d/mx*100:0,v:mx*100}}
+function hsv2hex(h,s,v){s/=100;v/=100;const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};
+  return'#'+[f(5),f(3),f(1)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')}
+// Строка CSS-переменных для обёртки экрана (.scr.A): phoneHTML/coverHTML здесь, frame() в приложении.
+function themeVars(c){const k=colsOf(c);
+  return`--bg:${k.bg};--s1:${k.s1};--s2:${k.s2};--tx:${k.tx};--tx2:${k.tx2};--qk:${k.qk};--start:${k.start};--startTx:${onColor(k.start)};`}
+// Заливка «весь экран»: фон цветом фазы, остальное контрастное. null — заливки нет.
+function runLook(col,c){
+  if(c.fill!=='screen')return null;
+  const fg=onColor(col);
+  return{fg,track:rgba(fg,.22),cur:rgba(fg,.55),
+    style:`background:${col};color:${fg};--bg:${col};--tx:${fg};--tx2:${rgba(fg,.7)};--s1:${rgba(fg,.16)};--s2:${rgba(fg,.24)};--orange:${fg};`}
+}
+// Раскладка экрана тренировки: 'mid' — круг по центру между верхом и кнопками; 'top' — круг сверху, надпись и раунды внизу.
+const runLayout=c=>c.ringPos==='top'?'top':'mid';
+
+Object.assign(T.ru,{thFill:'Заливка',thRing:'Только кольцо',thScreen:'Весь экран',thPos:'Круг на тренировке',thMid:'По центру',thTop:'Сверху',
+  thColors:'Цвета',thReset:'Сбросить к стандартным',thResetOne:'Вернуть стандартный',thH:'Оттенок',thS:'Насыщенность',thV:'Яркость',
+  thGScr:'Экран',thGPh:'Фазы',thGBtn:'Кнопки',
+  thc_bg:'Фон',thc_s1:'Карточки',thc_s2:'Второй слой',thc_tx:'Текст',thc_tx2:'Второстепенный текст',thc_round:'Раунд',thc_warn:'Предупреждение',
+  thc_rest:'Отдых',thc_prep:'Подготовка',thc_pause:'Пауза',thc_done:'Готово',thc_start:'Кнопка «Старт»',thc_qk:'Быстрый выбор'});
+Object.assign(T.en,{thFill:'Fill',thRing:'Ring only',thScreen:'Whole screen',thPos:'Ring position',thMid:'Centered',thTop:'Top',
+  thColors:'Colors',thReset:'Reset to defaults',thResetOne:'Restore default',thH:'Hue',thS:'Saturation',thV:'Brightness',
+  thGScr:'Screen',thGPh:'Phases',thGBtn:'Buttons',
+  thc_bg:'Background',thc_s1:'Cards',thc_s2:'Second layer',thc_tx:'Text',thc_tx2:'Secondary text',thc_round:'Round',thc_warn:'Warning',
+  thc_rest:'Rest',thc_prep:'Get ready',thc_pause:'Paused',thc_done:'Done',thc_start:'Start button',thc_qk:'Quick picks'});
+Object.assign(T.es,{thFill:'Relleno',thRing:'Solo el anillo',thScreen:'Toda la pantalla',thPos:'Posición del anillo',thMid:'Centrado',thTop:'Arriba',
+  thColors:'Colores',thReset:'Restablecer colores',thResetOne:'Volver al original',thH:'Tono',thS:'Saturación',thV:'Brillo',
+  thGScr:'Pantalla',thGPh:'Fases',thGBtn:'Botones',
+  thc_bg:'Fondo',thc_s1:'Tarjetas',thc_s2:'Segunda capa',thc_tx:'Texto',thc_tx2:'Texto secundario',thc_round:'Asalto',thc_warn:'Aviso',
+  thc_rest:'Descanso',thc_prep:'Preparación',thc_pause:'Pausa',thc_done:'Fin',thc_start:'Botón «Empezar»',thc_qk:'Selección rápida'});
+Object.assign(T.zh,{thFill:'填充',thRing:'仅圆环',thScreen:'整个屏幕',thPos:'圆环位置',thMid:'居中',thTop:'靠上',
+  thColors:'颜色',thReset:'恢复默认颜色',thResetOne:'恢复默认',thH:'色相',thS:'饱和度',thV:'亮度',
+  thGScr:'屏幕',thGPh:'阶段',thGBtn:'按钮',
+  thc_bg:'背景',thc_s1:'卡片',thc_s2:'第二层',thc_tx:'文字',thc_tx2:'次要文字',thc_round:'回合',thc_warn:'结束前提醒',
+  thc_rest:'休息',thc_prep:'准备',thc_pause:'暂停',thc_done:'完成',thc_start:'“开始”按钮',thc_qk:'快捷选择'});
+
+const thChk=on=>`<div class="rgt" data-box style="width:24px">${on?'<i class="ph-bold ph-check chk"></i>':''}</div>`;
+function scrTheme(c){
+  const t=T[c.lang],k=colsOf(c);
+  const opt=(key,val,lab)=>`<div class="it" data-thm="${key}:${val}"><div class="l" data-box data-ovf>${lab}</div>${thChk(c[key]===val)}</div>`;
+  const dots=`<span class="thdots">${['round','warn','rest','prep'].map(x=>`<i style="background:${k[x]}"></i>`).join('')}</span>`;
+  return`${backBar(t.theme)}
+  <div class="scroll">
+   <div class="grp"><h4 data-ovf>${t.thFill}</h4><div class="list">${opt('fill','ring',t.thRing)}${opt('fill','screen',t.thScreen)}</div></div>
+   <div class="grp"><h4 data-ovf>${t.thPos}</h4><div class="list">${opt('ringPos','mid',t.thMid)}${opt('ringPos','top',t.thTop)}</div></div>
+   <div class="grp"><div class="list"><div class="it" data-act="go:colors"><div class="l" data-box data-ovf>${t.thColors}</div><div class="rgt" data-box>${dots}${caret}</div></div></div></div>
+  </div>`;
+}
+function scrColors(c){
+  const t=T[c.lang],k=colsOf(c);
+  const row=key=>`<div class="it" data-act="go:col:${key}"><div class="l" data-box data-ovf>${t['thc_'+key]}</div><div class="rgt" data-box><span class="thsw" style="background:${k[key]}"></span>${caret}</div></div>`;
+  const grp=(h,keys)=>`<div class="grp"><h4 data-ovf>${h}</h4><div class="list">${keys.map(row).join('')}</div></div>`;
+  return`${backBar(t.thColors)}
+  <div class="scroll">${grp(t.thGScr,THC.scr)}${grp(t.thGPh,THC.ph)}${grp(t.thGBtn,THC.btn)}
+   <div class="threset" data-box data-ovf data-threset="all">${t.thReset}</div></div>`;
+}
+// HSV редактируемого цвета держим отдельно, чтобы оттенок не терялся на сером/чёрном
+let thHSV=null;
+const thHsvOf=(key,hex)=>thHSV&&thHSV.k===key&&thHSV.hex===hex?thHSV:{k:key,hex,...hex2hsv(hex)};
+function scrColor(c,key){
+  const t=T[c.lang],hex=colsOf(c)[key],x=thHsvOf(key,hex);
+  const hg='linear-gradient(90deg,#f00,#ff0 16.7%,#0f0 33.3%,#0ff 50%,#00f 66.7%,#f0f 83.3%,#f00)';
+  const sg=`linear-gradient(90deg,${hsv2hex(x.h,0,x.v)},${hsv2hex(x.h,100,x.v)})`;
+  const vg=`linear-gradient(90deg,#000,${hsv2hex(x.h,x.s,100)})`;
+  const sl=(ch,lab,val,max,grad)=>`<div class="thsl"><div class="thsl-l"><span data-ovf>${lab}</span><b>${Math.round(val)}</b></div><div class="thtr" data-thsl="${key}:${ch}" style="background:${grad}"><i style="left:${val/max*100}%"></i></div></div>`;
+  return`${backBar(t['thc_'+key])}
+  <div class="scroll">
+   <div class="thprev" data-box style="background:${hex};color:${onColor(hex)}"><b class="df">${hex.toUpperCase()}</b></div>
+   <div class="thpal">${THPAL.map(p=>`<span class="${p===hex.toLowerCase()?'on':''}" data-thpal="${key}:${p}" style="background:${p}"></span>`).join('')}</div>
+   <div class="list" style="padding:6px 16px 12px">${sl('h',t.thH,x.h,360,hg)}${sl('s',t.thS,x.s,100,sg)}${sl('v',t.thV,x.v,100,vg)}</div>
+   <div class="threset" data-box data-ovf data-threset="${key}">${t.thResetOne}</div>
+  </div>`;
+}
+SCR.theme={html:c=>scrTheme(c),back:'settings'};
+SCR.colors={html:c=>scrColors(c),back:'theme'};
+SCR['col:']={html:(c,id)=>scrColor(c,id.slice(4)),back:'colors'};
+
+function thSetCol(key,hex){const c=tgt();if(!c.colors||typeof c.colors!=='object')c.colors=clone(DEF.colors);c.colors[key]=hex}
+CLICK.push(e=>{
+  const th=e.target.closest('[data-thm]');if(th){const[k,v]=th.dataset.thm.split(':');tgt()[k]=v;renderAll();return true}
+  const pl=e.target.closest('[data-thpal]');if(pl){const[k,h]=pl.dataset.thpal.split(':');thSetCol(k,h);thHSV=null;renderAll();return true}
+  const rs=e.target.closest('[data-threset]');if(rs){const k=rs.dataset.threset;if(k==='all')tgt().colors=clone(DEF.colors);else thSetCol(k,DEF.colors[k]);thHSV=null;renderAll();return true}
+  if(e.target.closest('[data-thsl]'))return true;
+  return false;
+});
+// ползунки оттенок/насыщенность/яркость; слушаем document — phoneHost объявлен ниже
+let thDrag=null;
+function thMove(e){
+  const tr=document.querySelector(`#livePhoneHost [data-thsl="${thDrag.key}:${thDrag.ch}"],#host [data-thsl="${thDrag.key}:${thDrag.ch}"]`)||thDrag.el;if(!tr)return;
+  const b=tr.getBoundingClientRect(),p=Math.min(1,Math.max(0,(e.clientX-b.left)/b.width));
+  const x={...thHsvOf(thDrag.key,colsOf(tgt())[thDrag.key])};x[thDrag.ch]=p*(thDrag.ch==='h'?360:100);
+  x.hex=hsv2hex(x.h,x.s,x.v);thHSV=x;thSetCol(thDrag.key,x.hex);renderAll();
+}
+PDOWN.push(e=>{const tr=e.target.closest('[data-thsl]');if(!tr)return false;e.preventDefault();
+  const[key,ch]=tr.dataset.thsl.split(':');thDrag={key,ch,el:tr};thMove(e);return true});
+document.addEventListener('pointermove',e=>{if(thDrag)thMove(e)});
+['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>{if(thDrag){thDrag=null;changed();renderAll()}}));
+
+EXTRA_VIEWS.push(c=>{
+  const fs={...c,fill:'screen'},tp={...c,ringPos:'top'},ft={...c,fill:'screen',ringPos:'top'};
+  const V={round:{screen:'run',phase:'round',idx:4,left:587,dur:600},warn:{screen:'run',phase:'round',idx:4,left:10,dur:600},
+    prep:{screen:'run',phase:'prep',idx:1,left:7,dur:10},rest:{screen:'run',phase:'rest',idx:4,left:41,dur:60},
+    pause:{screen:'run',phase:'round',idx:4,left:432,dur:600,paused:true},done:{screen:'run',phase:'done',idx:12,left:0,dur:1}};
+  return[
+   {k:'theme',title:'Тема',kind:'phone',html:scrTheme(c),c},
+   {k:'colors',title:'Цвета',kind:'phone',html:scrColors(c),c},
+   {k:'color',title:'Цвет: раунд',kind:'phone',html:scrColor(c,'round'),c},
+   {k:'thdone',title:'Готово',kind:'phone',html:scrRun(V.done,c),c},
+   {k:'thtopround',title:'Круг сверху: раунд',kind:'phone',html:scrRun(V.round,tp),c:tp},
+   {k:'thtopwarn',title:'Круг сверху: отсчёт',kind:'phone',html:scrRun(V.warn,tp),c:tp},
+   {k:'thtopprep',title:'Круг сверху: подготовка',kind:'phone',html:scrRun(V.prep,tp),c:tp},
+   {k:'thtopdone',title:'Круг сверху: готово',kind:'phone',html:scrRun(V.done,tp),c:tp},
+   {k:'thfillround',title:'Заливка: раунд',kind:'phone',html:scrRun(V.round,fs),c:fs},
+   {k:'thfillwarn',title:'Заливка: отсчёт',kind:'phone',html:scrRun(V.warn,fs),c:fs},
+   {k:'thfillrest',title:'Заливка сверху: отдых',kind:'phone',html:scrRun(V.rest,ft),c:ft},
+   {k:'thfillpause',title:'Заливка сверху: пауза',kind:'phone',html:scrRun(V.pause,ft),c:ft},
+   {k:'thcfillround',title:'Внешний: заливка, раунд',kind:'cover',html:scrCover(V.round,fs),c:fs},
+   {k:'thcfillwarn',title:'Внешний: заливка, отсчёт',kind:'cover',html:scrCover(V.warn,fs),c:fs},
+   {k:'thcfillrest',title:'Внешний: заливка, отдых',kind:'cover',html:scrCover(V.rest,fs),c:fs},
+  ];
+});
+/* ================= конец: тема ================= */
+
+/* ================= функция: звуки ================= */
+// Свои звуки. Файл лежит в IndexedDB (база bt_sounds, хранилище snd: {id,name,data,t}),
+// список {id,name,t} копируется в localStorage (bt_usnd), чтобы имена были известны сразу при запуске.
+// В настройках событие хранит свой звук как 'u:<id>'. Прослушивание по ▶ играет и при выключенном звуке.
+Object.assign(T.ru,{mySnd:'Мои звуки',addSnd:'Добавить свой звук',addSndS:'аудиофайл с телефона',sndDel:'Удалить',sndErrRead:'Не удалось прочитать файл',sndErrBig:'Файл больше 10 МБ',sndErrDb:'Не удалось сохранить звук',sndBusy:'Загружаю…'});
+Object.assign(T.en,{mySnd:'My sounds',addSnd:'Add your own sound',addSndS:'audio file from your phone',sndDel:'Delete',sndErrRead:'Couldn’t read this file',sndErrBig:'File is over 10 MB',sndErrDb:'Couldn’t save the sound',sndBusy:'Loading…'});
+Object.assign(T.es,{mySnd:'Mis sonidos',addSnd:'Añadir sonido propio',addSndS:'archivo de audio del teléfono',sndDel:'Eliminar',sndErrRead:'No se pudo leer el archivo',sndErrBig:'El archivo supera 10 MB',sndErrDb:'No se pudo guardar el sonido',sndBusy:'Cargando…'});
+Object.assign(T.zh,{mySnd:'我的声音',addSnd:'添加自定义声音',addSndS:'手机里的音频文件',sndDel:'删除',sndErrRead:'无法读取此文件',sndErrBig:'文件超过 10 MB',sndErrDb:'无法保存声音',sndBusy:'正在加载…'});
+const USND={list:[],raw:{},db:null,loading:null,loaded:false,ren:null,del:null,msg:'',busy:false,pre:false};
+const U_MAX=10*1024*1024;
+const uEsc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const uOK=id=>USND.list.some(x=>'u:'+x.id===id);
+const U_BASE=ACTIONS.map(a=>a.opts.slice());
+// имена своих звуков в SNDN и списки выбора у всех пяти событий (свои звуки перед «Без звука»)
+function uSync(){
+  for(const k in SNDN)if(k.startsWith('u:')&&!uOK(k))delete SNDN[k];
+  USND.list.forEach(x=>{const n=uEsc(x.name);SNDN['u:'+x.id]={ru:n,en:n,es:n,zh:n}});
+  const u=USND.list.map(x=>'u:'+x.id);
+  ACTIONS.forEach((a,i)=>{const b=U_BASE[i];a.opts=b.filter(o=>o!=='none').concat(u,b.includes('none')?['none']:[])});
+}
+function uSaveMeta(){try{localStorage.setItem('bt_usnd',JSON.stringify(USND.list))}catch(e){}}
+try{const l=JSON.parse(localStorage.getItem('bt_usnd')||'[]');if(Array.isArray(l))USND.list=l.filter(x=>x&&x.id&&typeof x.name==='string')}catch(e){}
+uSync();
+// выбранный свой звук удалён: событие откатывается на звук по умолчанию; обходит все объекты snd в настройках (и в пресетах внутри них)
+function uFix(o,d){d=d||0;if(!o||typeof o!=='object'||d>6)return false;let ch=false;
+  if(o.snd&&typeof o.snd==='object')for(const k in o.snd){const v=o.snd[k];if(typeof v==='string'&&((v.startsWith('u:')&&!uOK(v))||(!USER_SND&&(v==='user1'||v==='user2')))){o.snd[k]=(DEF.snd&&DEF.snd[k])||'none';ch=true}}
+  for(const k in o)if(k!=='snd'&&o[k]&&typeof o[k]==='object'&&uFix(o[k],d+1))ch=true;
+  return ch}
+function uFixAll(){const a=uFix(cfg),b=EDIT&&EDIT!==cfg?uFix(EDIT):false;if(a||b)saveCfg();return a||b}
+loadCfg=(f=>function(){f.apply(this,arguments);uFixAll()})(loadCfg);
+CHANGE_HOOKS.push(uFixAll);
+// IndexedDB
+function uDB(){if(USND.db)return USND.db;
+  USND.db=new Promise((res,rej)=>{try{const r=indexedDB.open('bt_sounds',1);
+    r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('snd'))r.result.createObjectStore('snd',{keyPath:'id'})};
+    r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});
+  USND.db.catch(()=>{USND.db=null});return USND.db}
+function uTx(mode,fn){return uDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('snd',mode),out=fn(tx.objectStore('snd'));
+  tx.oncomplete=()=>res(out&&out.result);tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)}))}
+const uOnSounds=()=>typeof live!=='undefined'&&(live.screen==='sounds'||live.screen.startsWith('snd:'));
+// при запуске: список из базы главнее копии в localStorage
+function uLoad(){if(USND.loading)return USND.loading;
+  return USND.loading=uTx('readonly',st=>st.getAll()).then(all=>{all=all||[];
+    USND.raw={};all.forEach(x=>{USND.raw[x.id]=x.data});
+    USND.list=all.map(x=>({id:x.id,name:x.name,t:x.t||0})).sort((a,b)=>a.t-b.t);
+    USND.loaded=true;uSaveMeta();uSync();if(uFixAll())changed();if(uOnSounds())renderPhone();
+  }).catch(e=>{console.warn('свои звуки',e);USND.loading=null})}
+// декодирование в BUF['u:<id>'], играет существующий playBuf (короткие события обрезаются как гонги)
+function uDecode(id){const k='u:'+id;if(BUF[k])return Promise.resolve(BUF[k]);
+  return (USND.loaded?Promise.resolve():uLoad()).then(()=>{const d=USND.raw[id];if(!d)return null;return ac().decodeAudioData(d.slice(0)).then(b=>BUF[k]=b)})
+    .catch(e=>{console.warn('sound',k,e);return null})}
+function playUser(k,short){if(BUF[k]){playBuf(k,short);return}
+  const t0=Date.now();uDecode(k.slice(2)).then(b=>{if(b&&Date.now()-t0<1500)playBuf(k,short)})}
+// заранее декодировать на первом касании (контекст звука можно создавать только после жеста)
+PDOWN.push(()=>{if(!USND.pre){USND.pre=true;Promise.resolve(USND.loaded||uLoad()).then(()=>USND.list.forEach(x=>uDecode(x.id)))}return false});
+if(window.indexedDB)uLoad();
+// добавление файла
+let uInput=null;
+function uPick(){if(!uInput){uInput=document.createElement('input');uInput.type='file';uInput.accept='audio/*';uInput.style.display='none';document.body.appendChild(uInput);
+  uInput.addEventListener('change',()=>{const f=uInput.files&&uInput.files[0];uInput.value='';if(f)uAdd(f)})}
+  uInput.click()}
+function uMsg(m){USND.msg=m;USND.busy=false;if(uOnSounds())renderPhone()}
+async function uAdd(f){const t=T[tgt().lang];
+  if(f.size>U_MAX){uMsg(t.sndErrBig);return}
+  USND.busy=true;USND.msg='';if(uOnSounds())renderPhone();
+  let data,buf;
+  try{data=await f.arrayBuffer();buf=await ac().decodeAudioData(data.slice(0))}catch(e){uMsg(t.sndErrRead);return}
+  const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const name=(f.name||'').replace(/\.[^.]+$/,'').trim().slice(0,40)||'sound';
+  const rec={id,name,data,t:Date.now()};
+  try{if(!USND.loaded)await uLoad();await uTx('readwrite',st=>st.put(rec))}catch(e){console.warn(e);uMsg(t.sndErrDb);return}
+  USND.raw[id]=data;if(!USND.list.some(x=>x.id===id))USND.list.push({id,name,t:rec.t});BUF['u:'+id]=buf;uSaveMeta();uSync();uMsg('');
+}
+function uRename(id,name){name=String(name).trim().slice(0,40);const x=USND.list.find(x=>x.id===id);USND.ren=null;
+  if(x&&name&&name!==x.name){x.name=name;uSaveMeta();uSync();
+    uTx('readwrite',st=>{const r=st.get(id);r.onsuccess=()=>{if(r.result){r.result.name=name;st.put(r.result)}};return r}).catch(e=>console.warn(e))}
+  if(uOnSounds())renderPhone()}
+function uDelete(id){USND.list=USND.list.filter(x=>x.id!==id);delete USND.raw[id];delete BUF['u:'+id];USND.del=null;uSaveMeta();uSync();
+  uTx('readwrite',st=>st.delete(id)).catch(e=>console.warn(e));uFixAll()}
+// группа «Мои звуки» на экране Звуки
+function uGroup(c,list){const t=T[c.lang];
+  const play=x=>`<span class="play" data-box data-uplay="${x.id}"><i class="ph-fill ph-play"></i></span>`;
+  const rows=list.map(x=>{
+    if(USND.ren===x.id)return `<div class="it us">${play(x)}<input class="uname" data-box data-uinp="${x.id}" maxlength="40" value="${uEsc(x.name)}"></div>`;
+    if(USND.del===x.id)return `<div class="it us"><span class="un" data-box>${uEsc(x.name)}</span><span class="rgt" data-box><span class="udel" data-udelok="${x.id}">${t.sndDel}</span><span class="uic" data-udelno><i class="ph ph-x"></i></span></span></div>`;
+    return `<div class="it us">${play(x)}<span class="un" data-box>${uEsc(x.name)}</span><span class="rgt" data-box><span class="uic" data-uren="${x.id}"><i class="ph ph-pencil-simple"></i></span><span class="uic" data-udel="${x.id}"><i class="ph ph-trash"></i></span></span></div>`}).join('');
+  const add=`<div class="it" data-uadd><div class="l" data-box data-ovf>${USND.busy?t.sndBusy:t.addSnd}<small>${USND.msg?`<span class="uerr">${USND.msg}</span>`:t.addSndS}</small></div><div class="rgt" data-box><span class="uic uplus"><i class="ph ph-plus"></i></span></div></div>`;
+  return `<div class="grp"><h4 data-ovf>${t.mySnd}</h4><div class="list">${rows}${add}</div></div>`}
+const uBaseSounds=SCR.sounds.html;
+SCR.sounds.html=(c,id)=>{if(uFix(c))saveCfg();const h=uBaseSounds(c,id),i=h.lastIndexOf('</div>');return i<0?h:h.slice(0,i)+uGroup(c,USND.list)+h.slice(i)};
+const uBaseSnd=SCR['snd:'].html;
+SCR['snd:'].html=(c,id)=>{if(uFix(c))saveCfg();return uBaseSnd(c,id)};
+CLICK.push(e=>{const g=s=>e.target.closest(s);let x;
+  if(g('[data-uinp]'))return true;
+  if(x=g('[data-uplay]')){playUser('u:'+x.dataset.uplay);return true}
+  // выбор и прослушивание своего звука в списке события (id с двоеточием, общий обработчик делит по ':')
+  if((x=g('[data-play]'))&&x.dataset.play.includes(':u:')){const i=x.dataset.play.indexOf(':'),k=x.dataset.play.slice(0,i);playSnd(x.dataset.play.slice(i+1),ACTIONS.find(a=>a.k===k).short);return true}
+  if((x=g('[data-pick]'))&&x.dataset.pick.includes(':u:')){const i=x.dataset.pick.indexOf(':'),k=x.dataset.pick.slice(0,i),o=x.dataset.pick.slice(i+1);
+    tgt().snd[k]=o;playSnd(o,ACTIONS.find(a=>a.k===k).short);renderPhone();return true}
+  if(g('[data-uadd]')){USND.msg='';USND.del=null;uPick();return true}
+  if(x=g('[data-uren]')){USND.ren=x.dataset.uren;USND.del=null;renderPhone();const inp=phoneHost.querySelector('[data-uinp]');
+    if(inp){inp.focus();inp.select();inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')inp.blur()});inp.addEventListener('blur',()=>uRename(inp.dataset.uinp,inp.value),{once:true})}return true}
+  if(x=g('[data-udel]')){USND.del=x.dataset.udel;USND.ren=null;renderPhone();return true}
+  if(x=g('[data-udelok]')){uDelete(x.dataset.udelok);renderPhone();return true}
+  if(g('[data-udelno]')){USND.del=null;renderPhone();return true}
+  USND.del=null;return false});
+// доска: экран Звуки с образцами своих звуков, подтверждение удаления, ошибка, переименование, список выбора
+EXTRA_VIEWS.push(c=>{
+  const N={ru:['Мой гонг','Свисток тренера'],en:['My gong','Coach whistle'],es:['Mi gong','Silbato del entrenador'],zh:['我的锣','教练哨声']}[c.lang]||['A','B'];
+  const keep={list:USND.list,ren:USND.ren,del:USND.del,msg:USND.msg,busy:USND.busy},out=[];
+  const cc=clone(c);cc.snd.endRound='u:b1';const t=T[c.lang];
+  const only=()=>`${backBar(t.sounds)}<div class="scroll">${uGroup(cc,USND.list)}</div>`;
+  try{
+    USND.list=[{id:'b1',name:N[0],t:1},{id:'b2',name:N[1],t:2}];USND.ren=null;USND.del=null;USND.msg='';USND.busy=false;uSync();
+    out.push({k:'usounds',title:'Звуки со своими звуками',kind:'phone',html:SCR.sounds.html(cc,'sounds'),c:cc});
+    out.push({k:'umine',title:'Мои звуки',kind:'phone',html:only(),c:cc});
+    USND.del='b2';USND.msg=t.sndErrRead;out.push({k:'udel',title:'Мои звуки: удаление и ошибка',kind:'phone',html:only(),c:cc});
+    USND.del=null;USND.msg='';USND.ren='b1';USND.busy=true;out.push({k:'uren',title:'Мои звуки: переименование',kind:'phone',html:only(),c:cc});
+    USND.ren=null;USND.busy=false;
+    ACTIONS.forEach(a=>out.push({k:'usnd'+a.k,title:'Звук со своими: '+T.ru[a.t].toLowerCase(),kind:'phone',html:scrSound(cc,a.k),c:cc}));
+  }finally{Object.assign(USND,keep);uSync()}
+  return out});
+/* ================= конец: звуки ================= */
+
+/* ================= функция: таймеры ================= */
+// Диапазоны ползунков и кнопки быстрого выбора для четырёх полей меню. Живут в cfg.lim, значит входят в полные настройки пресета.
+// lim[k]: min, max, snap (шаг магнита), qOn (кнопки включены), qN (сколько кнопок, 3–7), q (7 значений, показываются первые qN).
+const LIM_KEYS=['round','rest','rounds','prep'];
+const LIM_TIME={round:true,rest:true,rounds:false,prep:true};
+const LIM_ABS={round:[1,3600],rest:[0,3600],rounds:[1,99],prep:[0,3600]}; // пределы для min/max в настройках
+const LIM_SNAPS={t:[1,5,10,15,30,60],n:[1,2,5]};
+addDefaults({lim:{
+  round:{min:10,max:600,snap:10,qOn:true,qN:7,q:[20,30,40,60,90,120,180]},
+  rest:{min:10,max:300,snap:10,qOn:true,qN:7,q:[15,30,45,60,90,120,180]},
+  rounds:{min:1,max:30,snap:1,qOn:false,qN:7,q:[3,4,5,6,8,10,12]},
+  prep:{min:0,max:60,snap:5,qOn:true,qN:7,q:[5,10,15,20,30,45,60]}}});
+Object.assign(T.ru,{tMin:'Минимум',tMax:'Максимум',tSnap:'Шаг ползунка',tQ:'Кнопки быстрого выбора',tQN:'Сколько кнопок',tHint:'Нажмите на значение, чтобы ввести его с клавиатуры.',tReset:'Сбросить к стандартным',uH:'ч',uM:'мин',uS:'с'});
+Object.assign(T.en,{tMin:'Minimum',tMax:'Maximum',tSnap:'Slider step',tQ:'Quick-pick buttons',tQN:'Number of buttons',tHint:'Tap a value to type it in.',tReset:'Reset to defaults',uH:'h',uM:'min',uS:'s'});
+Object.assign(T.es,{tMin:'Mínimo',tMax:'Máximo',tSnap:'Paso del control',tQ:'Botones rápidos',tQN:'Número de botones',tHint:'Toca un valor para escribirlo.',tReset:'Restablecer',uH:'h',uM:'min',uS:'s'});
+Object.assign(T.zh,{tMin:'最小值',tMax:'最大值',tSnap:'滑块步长',tQ:'快捷按钮',tQN:'按钮数量',tHint:'点按数值即可输入。',tReset:'恢复默认',uH:'时',uM:'分',uS:'秒'});
+
+function limOf(c,k){c=c||cfg;if(!c.lim)c.lim=clone(DEF.lim);if(!c.lim[k])c.lim[k]=clone(DEF.lim[k]);return c.lim[k]}
+function lim(k,c){const L=limOf(c,k);return{min:L.min,max:L.max,snap:L.snap||1,time:LIM_TIME[k]}}
+// положение ручки в %, значение сверх максимума упирается в конец
+function limPct(k,v,c){const s=lim(k,c),sp=s.max-s.min;return sp>0?Math.min(100,Math.max(0,(v-s.min)/sp*100)):0}
+// риски линейки: шаг по диапазону, не больше 10 рисок
+function limMarks(k,c){const s=lim(k,c),sp=s.max-s.min;if(!s.time||sp<=0)return'';
+  const st=[5,10,15,30,60,120,300,600,900,1800].find(x=>sp/x<=10)||3600;let h='';
+  for(let m=Math.floor(s.min/st)*st+st;m<s.max;m+=st)h+=`<i class="mk${st<60&&m%60===0?' mj':''}" style="left:${(m-s.min)/sp*100}%"></i>`;
+  return h}
+const limTxt=(k,v)=>LIM_TIME[k]?fmt(v):String(v);
+function quickRow(k,c){const L=limOf(c,k);if(!L.qOn)return'';const vs=L.q.slice(0,L.qN);
+  const lab=v=>LIM_TIME[k]&&v<60?String(v):limTxt(k,v);
+  const small=vs.length>=6&&vs.some(v=>lab(v).length>=5)?' style="font-size:11px"':'';
+  return `<div class="presets qk" style="grid-template-columns:repeat(${vs.length},1fr)">${vs.map(v=>`<span data-ovf data-q="${k}:${v}"${small} class="${c[k]===v?'on':''}">${lab(v)}</span>`).join('')}</div>`}
+// проверка настроек одного поля: min<max в пределах LIM_ABS, 3–7 кнопок; значение кнопки при вводе зажимается в min..max
+// (при смене min/max кнопки не трогаем, чтобы не терять набранное)
+function fixLim(k,L){const[a,b]=LIM_ABS[k];
+  L.min=Math.max(a,Math.min(b-1,Math.round(+L.min||0)));L.max=Math.max(L.min+1,Math.min(b,Math.round(+L.max||0)));
+  L.qN=Math.max(3,Math.min(7,Math.round(+L.qN||7)));if(!Array.isArray(L.q))L.q=clone(DEF.lim[k].q);
+  while(L.q.length<7)L.q.push(L.max);L.q=L.q.slice(0,7).map(v=>Math.max(a,Math.round(+v||0)));
+  if(!(L.snap>0))L.snap=1}
+function setLim(c,k,f,v){const L=limOf(c,k),[a,b]=LIM_ABS[k];
+  if(f==='min')L.min=Math.max(a,Math.min(L.max-1,v));
+  else if(f==='max')L.max=Math.min(b,Math.max(L.min+1,v));
+  else if(f==='qN')L.qN=Math.max(3,Math.min(7,v));
+  fixLim(k,L)}
+// шаг кнопок −/+ для min/max: мелкий у малых значений, крупный у больших
+const limStep=(k,v,dir)=>{if(!LIM_TIME[k])return 1;const x=dir>0?v:v-1;return x<60?5:x<600?10:x<1800?30:60};
+
+function scrTimers(c){
+  const t=T[c.lang],lab={round:t.round,rest:t.rest,rounds:t.rounds,prep:t.prep};
+  const st=(k,f,v)=>`<span class="tst" data-box><span data-tstep="${k}:${f}:-1"><i class="ph-bold ph-minus"></i></span><b data-tedit="${k}:${f}">${v}</b><span data-tstep="${k}:${f}:1"><i class="ph-bold ph-plus"></i></span></span>`;
+  const row=(l,r)=>`<div class="it"><div class="l" data-box data-ovf>${l}</div>${r}</div>`;
+  return `${backBar(t.timersM)}
+  <div class="scroll"><div class="tqh" style="padding:0 4px 12px">${t.tHint}</div>
+   ${LIM_KEYS.map(k=>{const L=limOf(c,k);
+    return `<div class="grp"><h4 data-ovf>${lab[k]}</h4><div class="list">
+     ${row(t.tMin,st(k,'min',limTxt(k,L.min)))}
+     ${row(t.tMax,st(k,'max',limTxt(k,L.max)))}
+     ${row(t.tSnap,`<span class="chip" data-box data-tsnap="${k}">${L.snap}${LIM_TIME[k]?' '+t.s:''}</span>`)}
+     ${row(t.tQ,`<span data-box><span class="tg ${L.qOn?'on':''}" data-tqon="${k}"></span></span>`)}
+     ${L.qOn?row(t.tQN,st(k,'qN',L.qN))+`<div class="tqg">${L.q.slice(0,L.qN).map((v,i)=>`<span data-tqv="${k}:${i}">${limTxt(k,v)}</span>`).join('')}</div>`:''}
+    </div></div>`}).join('')}
+   <div class="treset" data-treset data-ovf>${t.tReset}</div>
+  </div>`;
+}
+SCR.timers={html:c=>scrTimers(c),back:'settings'};
+
+// ввод значения прямо в ячейке экрана настроек
+function limInline(el,k,init,commit){
+  el.innerHTML=`<input inputmode="numeric" autocomplete="off" value="${init}">`;const i=el.querySelector('input');i.focus();i.select();
+  let fin=false;const done=save=>{if(fin)return;fin=true;if(save)commit(i.value);changed();renderPhone()};
+  i.addEventListener('keydown',ev=>{if(ev.key==='Enter')done(true);if(ev.key==='Escape')done(false)});i.addEventListener('blur',()=>done(true));
+}
+CLICK.push(e=>{
+  if(e.target.closest('input'))return false;
+  const q=e.target.closest('[data-q]');if(q){const[k,v]=q.dataset.q.split(':');cfg[k]=+v;click(true);renderAll();return true}
+  if(live.screen!=='timers')return false;
+  const c=tgt();
+  const sp=e.target.closest('[data-tstep]');if(sp){const[k,f,d]=sp.dataset.tstep.split(':'),dir=+d,cur=limOf(c,k)[f];
+    let v=cur+dir;if(f!=='qN'){const s=limStep(k,cur,dir);v=dir>0?Math.floor(cur/s)*s+s:Math.ceil(cur/s)*s-s}
+    setLim(c,k,f,v);click(false);renderPhone();return true}
+  const ed=e.target.closest('[data-tedit]');if(ed){const[k,f]=ed.dataset.tedit.split(':'),L=limOf(c,k);
+    limInline(ed,k,f==='qN'?L.qN:limTxt(k,L[f]),s=>setLim(c,k,f,f==='qN'?parseTime(s,'rounds',L.qN):parseTime(s,k,L[f])));return true}
+  const qv=e.target.closest('[data-tqv]');if(qv){const[k,i]=qv.dataset.tqv.split(':'),L=limOf(c,k);
+    limInline(qv,k,limTxt(k,L.q[i]),s=>{L.q[i]=Math.max(L.min,Math.min(L.max,parseTime(s,k,L.q[i])));fixLim(k,L)});return true}
+  const sn=e.target.closest('[data-tsnap]');if(sn){const k=sn.dataset.tsnap,L=limOf(c,k),o=LIM_SNAPS[LIM_TIME[k]?'t':'n'].filter(x=>x<L.max-L.min);
+    const list=o.length?o:[1];L.snap=list[(list.indexOf(L.snap)+1)%list.length];renderPhone();return true}
+  const qo=e.target.closest('[data-tqon]');if(qo){const L=limOf(c,qo.dataset.tqon);L.qOn=!L.qOn;renderPhone();return true}
+  if(e.target.closest('[data-treset]')){c.lim=clone(DEF.lim);click(true);renderPhone();return true}
+  return false;
+});
+EXTRA_VIEWS.push(c=>{
+  const cq={...c,lim:clone(DEF.lim)};LIM_KEYS.forEach(k=>cq.lim[k].qOn=true);
+  const cm={...cq,round:600,rest:300,rounds:30,prep:60};
+  const ch={...c,round:5400,rest:3600,prep:600};
+  return [
+   {k:'timers',title:'Значения таймеров',kind:'phone',html:scrTimers(cq),c:cq},
+   {k:'menuq',title:'Меню: кнопки у всех полей',kind:'phone',html:scrMenu(cm),c:cm},
+   {k:'menuh',title:'Меню: раунд 1:30:00',kind:'phone',html:scrMenu(ch),c:ch},
+   {k:'round90',title:'Раунд 1:30:00',kind:'phone',html:scrRun({screen:'run',phase:'round',idx:4,left:5399,dur:5400},ch),c:ch},
+   {k:'pause90',title:'Пауза 1:30:00',kind:'phone',html:scrRun({screen:'run',phase:'round',idx:4,left:4321,dur:5400,paused:true},ch),c:ch},
+   {k:'cidle90',title:'Внешний: ожидание 1:30:00',kind:'cover',html:scrCover({screen:'menu'},ch),c:ch},
+   {k:'cround90',title:'Внешний: раунд 1:30:00',kind:'cover',html:scrCover({screen:'run',phase:'round',idx:4,left:5399,dur:5400},ch),c:ch},
+   {k:'csetup90',title:'Внешний: настройка 1:30:00',kind:'cover',html:scrCoverSetup(ch),c:ch},
+  ];
+});
+/* ================= конец: таймеры ================= */
+
+/* ================= функция: пресеты ================= */
+// Пять слотов в localStorage 'bt_presets' (отдельно от cfg). Слот: null или {round,rest,rounds,prep,name,full}.
+// name=null: имя строится из значений. full=null: пресет хранит только 4 таймера, остальное берётся из приложения.
+// full: полные настройки пресета (копия cfg без mute); пока их правят, EDIT указывает на этот объект.
+Object.assign(T.ru,{presets:'Пресеты',pSave:'Сохранить текущие',pCancel:'Отмена',pPick:'Куда сохранить?',pEmpty:'Пусто',pSaveHere:'сохранить сюда',pReplace:'заменить',pDel:'Удалить',pStrip:'Убрать настройки',pStrip2:'Только таймеры',pOf:'Настройки пресета {n}',pHint:'Тап по пресету загружает его'});
+Object.assign(T.en,{presets:'Presets',pSave:'Save current',pCancel:'Cancel',pPick:'Pick a slot',pEmpty:'Empty',pSaveHere:'save here',pReplace:'replace',pDel:'Delete',pStrip:'Remove settings',pStrip2:'Timers only',pOf:'Preset {n} settings',pHint:'Tap a preset to load it'});
+Object.assign(T.es,{presets:'Preajustes',pSave:'Guardar actuales',pCancel:'Cancelar',pPick:'¿Dónde guardar?',pEmpty:'Vacío',pSaveHere:'guardar aquí',pReplace:'reemplazar',pDel:'Borrar',pStrip:'Quitar ajustes',pStrip2:'Solo tiempos',pOf:'Ajustes del preajuste {n}',pHint:'Toca un preajuste para cargarlo'});
+Object.assign(T.zh,{presets:'预设',pSave:'保存当前设置',pCancel:'取消',pPick:'保存到哪个位置？',pEmpty:'空',pSaveHere:'保存到这里',pReplace:'替换',pDel:'删除',pStrip:'移除设置',pStrip2:'仅保留计时',pOf:'预设 {n} 的设置',pHint:'轻触预设即可载入'});
+const P_N=5,P_TIM=['round','rest','rounds','prep'];
+const P_SKIP=['mute'];                                   // не попадают в полные настройки пресета
+const P_KEEP=['round','rest','rounds','prep','mute','lang']; // при загрузке не берутся из полных настроек
+const PRE=Array(P_N).fill(null);
+let P_UI={save:false,ren:-1,arm:-1},EDIT_I=-1;
+function pNorm(p){if(!p||typeof p!=='object')return null;
+  const o={name:typeof p.name==='string'&&p.name.trim()?p.name.slice(0,24):null,full:p.full&&typeof p.full==='object'?p.full:null};
+  for(const k of P_TIM){const v=+p[k];o[k]=isFinite(v)&&v>=0?Math.round(v):cfg[k]}return o}
+try{const a=JSON.parse(localStorage.getItem('bt_presets')||'null');if(Array.isArray(a))for(let i=0;i<P_N;i++)PRE[i]=pNorm(a[i])}catch(e){}
+function savePresets(){try{localStorage.setItem('bt_presets',JSON.stringify(PRE))}catch(e){}}
+const pEsc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+const pAuto=p=>`${fmt(p.round)} × ${p.rounds} / ${fmt(p.rest)}`;
+const pName=p=>p.name||pAuto(p);
+// Объект для экранов настроек пресета: текущий cfg (там поля, добавленные позже), поверх него сохранённое в пресете.
+function pEditObj(p,base){const o=clone(base||cfg);if(p.full)mergeCfg(o,p.full);
+  P_TIM.forEach(k=>o[k]=p[k]);o.lang=(base||cfg).lang;P_SKIP.forEach(k=>delete o[k]);return o}
+function pStore(i){PRE[i]={round:cfg.round,rest:cfg.rest,rounds:cfg.rounds,prep:cfg.prep,name:null,full:null}}
+function pLoad(i){const p=PRE[i];if(!p)return;
+  if(p.full){const f=clone(p.full);P_KEEP.forEach(k=>delete f[k]);mergeCfg(cfg,f);if(!F(cfg.font))cfg.font='fira'}
+  P_TIM.forEach(k=>cfg[k]=p[k])}
+function pEndEdit(){EDIT=null;EDIT_I=-1}
+function pCommitRen(inp){const i=+inp.dataset.pin,p=PRE[i];
+  if(p){const v=inp.value.trim().slice(0,24);p.name=v&&v!==pAuto(p)?v:null;savePresets()}P_UI.ren=-1}
+
+function scrPresets(c,list,ui){
+  const t=T[c.lang];ui=ui||{save:false,ren:-1,arm:-1};
+  const slot=(p,i)=>{
+    if(!p)return `<div class="pslot empty ${ui.save?'pick':''}" data-pslot="${i}" data-box><div class="pnm"><span class="pno">${i+1}.</span><span class="pt" data-ovf>${ui.save?t.pSaveHere:t.pEmpty}</span></div></div>`;
+    const full=!!p.full;
+    const nm=ui.ren===i
+      ?`<input class="pin" data-pin="${i}" maxlength="24" value="${pEsc(pName(p))}"><span class="pok" data-pa="ok"><i class="ph-bold ph-check"></i></span>`
+      :`<span class="pno">${i+1}.</span>${full?'<i class="ph ph-sliders-horizontal pfi"></i>':''}<span class="pt" ${p.name?'':'data-ovf'}>${pEsc(pName(p))}</span>`;
+    let row;
+    if(ui.arm===i)row=`<div class="prow" data-box data-ovf>${full?`<span class="pchip" data-pa="strip:${i}">${t.pStrip2}</span>`:''}<span class="pchip red" data-pa="del:${i}">${t.pDel}</span></div>`; // отмена: тап по слоту
+    else if(ui.save)row=`<div class="prow" data-box><span class="pinfo"><i class="ph ph-hourglass-medium"></i>${fmt(p.prep)}</span><span class="pchip red" data-ovf>${t.pReplace}</span></div>`;
+    else row=`<div class="prow" data-box><span class="pinfo" data-ovf><i class="ph ph-hourglass-medium"></i>${fmt(p.prep)}</span><span class="pacts"><span data-pa="ren:${i}"><i class="ph ph-pencil-simple"></i></span><span data-pa="edit:${i}"><i class="ph ${full?'ph-sliders-horizontal':'ph-plus'}"></i></span><span data-pa="arm:${i}"><i class="ph ph-trash"></i></span></span></div>`;
+    return `<div class="pslot ${ui.save?'pick':''}" data-pslot="${i}"><div class="pnm" data-box>${nm}</div>${row}</div>`};
+  return `${backBar(t.presets)}<div class="scroll">
+   <div class="pbtn ${ui.save?'cancel':''}" data-pa="save" data-box><i class="ph ${ui.save?'ph-x':'ph-floppy-disk'}"></i><span data-ovf>${ui.save?t.pCancel:t.pSave}</span></div>
+   <div class="grp"><h4 data-ovf>${ui.save?t.pPick:t.pHint}</h4>${list.map(slot).join('')}</div></div>`;
+}
+SCR.presets={html:c=>scrPresets(c,PRE,P_UI),back:'menu'};
+
+// Настройки в режиме пресета: полоска «Настройки пресета N» сверху, «назад» ведёт на пресеты.
+const P_SET=SCR.settings.html;
+function pBanner(c,i,p){const t=T[c.lang];
+  return `<div class="pbanner" data-box><span class="pbt" data-ovf><i class="ph ph-sliders-horizontal"></i>${t.pOf.replace('{n}',i+1)}</span>
+   <div class="pbr"><span class="pbn" data-ovf>${p?pEsc(pName(p)):''}</span><span class="pchip" data-pstrip>${t.pStrip}</span></div></div>`}
+function pWithBanner(h,c,i,p){const b=pBanner(c,i,p),s='<div class="scroll">',k=h.indexOf(s);
+  return k<0?h+`<div style="position:absolute;top:84px;left:16px;right:16px">${b}</div>`:h.slice(0,k+s.length)+b+h.slice(k+s.length)}
+SCR.settings={...SCR.settings,html:(c,id)=>{const h=P_SET(c,id);return EDIT&&EDIT_I>=0?pWithBanner(h,c,EDIT_I,PRE[EDIT_I]):h},back:()=>EDIT?'presets':'menu'};
+
+CLICK.push(e=>{
+  const scr=live.screen;
+  if(e.target.closest('[data-act="go:presets"]')){pEndEdit();P_UI={save:false,ren:-1,arm:-1};return false}
+  if(scr==='menu'&&e.target.closest('[data-act="settings"]')){pEndEdit();return false}
+  if(scr==='settings'&&EDIT){
+    if(e.target.closest('[data-act="back"]')){pEndEdit();live.screen='presets';renderAll();return true}
+    if(e.target.closest('[data-pstrip]')){if(PRE[EDIT_I])PRE[EDIT_I].full=null;pEndEdit();savePresets();live.screen='presets';renderAll();return true}
+    return false}
+  if(scr!=='presets')return false;
+  if(e.target.closest('[data-act="back"]')){P_UI={save:false,ren:-1,arm:-1};return false}
+  if(e.target.closest('.pin'))return true;
+  const inp=phoneHost.querySelector('.pin');if(inp&&P_UI.ren>=0)pCommitRen(inp);
+  const a=e.target.closest('[data-pa]'),sl=e.target.closest('[data-pslot]');
+  if(!a&&!sl){if(inp){renderPhone();return true}return false}
+  const R=P_UI;let focus=false;
+  if(a){const [act,n]=a.dataset.pa.split(':'),i=+n;
+    if(act==='save'){R.save=!R.save;R.arm=-1}
+    else if(act==='ren'){R.ren=i;R.arm=-1;R.save=false;focus=true}
+    else if(act==='edit'&&PRE[i]){const p=PRE[i];p.full=pEditObj(p);EDIT=p.full;EDIT_I=i;P_UI={save:false,ren:-1,arm:-1};live.screen='settings'}
+    else if(act==='arm'){R.arm=R.arm===i?-1:i}
+    else if(act==='del'){PRE[i]=null;R.arm=-1}
+    else if(act==='strip'&&PRE[i]){PRE[i].full=null;R.arm=-1}
+    else if(act==='unarm'){R.arm=-1}
+  }else{const i=+sl.dataset.pslot;
+    if(R.save||!PRE[i]){pStore(i);R.save=false;R.arm=-1;click(true)}
+    else if(R.arm===i)R.arm=-1;
+    else{pLoad(i);R.arm=-1;click(true);live.screen='menu'}}
+  savePresets();renderAll();
+  if(focus){const x=phoneHost.querySelector('.pin');if(x){x.focus();x.select()}}
+  return true});
+const P_HOST=document.getElementById('livePhoneHost')||document.getElementById('host'); // в приложении экран живёт в #host; // phoneHost объявлен ниже, здесь его ещё нет
+P_HOST.addEventListener('keydown',e=>{const x=e.target;if(!x.classList||!x.classList.contains('pin'))return;
+  if(e.key==='Enter'){e.preventDefault();pCommitRen(x);renderPhone()}else if(e.key==='Escape'){P_UI.ren=-1;renderPhone()}});
+P_HOST.addEventListener('focusout',e=>{const x=e.target;if(x.classList&&x.classList.contains('pin')&&P_UI.ren>=0)pCommitRen(x)});
+CHANGE_HOOKS.push(()=>{if(EDIT&&EDIT.lang&&EDIT.lang!==cfg.lang){cfg.lang=EDIT.lang;saveCfg()}savePresets()});
+
+EXTRA_VIEWS.push(c=>{
+  try{if(!SHOW.includes('presets'))SHOW.push('presets','presetSet')}catch(e){} // показать на доске
+  const ex=[{round:180,rest:60,rounds:12,prep:10,name:null,full:null},{round:120,rest:30,rounds:6,prep:0,name:'Sparring',full:{}},
+    {round:600,rest:300,rounds:30,prep:60,name:null,full:null},{round:180,rest:60,rounds:3,prep:10,name:null,full:{}},null];
+  const ec=pEditObj(ex[3],c);
+  return [
+   {k:'presets',title:'Пресеты',kind:'phone',html:scrPresets(c,ex),c},
+   {k:'presetsSave',title:'Пресеты: куда сохранить',kind:'phone',html:scrPresets(c,ex,{save:true,ren:-1,arm:-1}),c},
+   {k:'presetsArm',title:'Пресеты: удаление и имя',kind:'phone',html:scrPresets(c,ex,{save:false,ren:0,arm:3}),c},
+   {k:'presetSet',title:'Настройки пресета',kind:'phone',html:pWithBanner(P_SET(ec,'settings'),ec,4,ex[2]),c:ec}];
+});
+/* ================= конец: пресеты ================= */
+
+/* ================= overlap check ================= */
+function rel(r,b){return{l:r.left-b.left,t:r.top-b.top,r:r.right-b.left,b:r.bottom-b.top}}
+const inter=(a,b)=>a.l<b.r-1&&b.l<a.r-1&&a.t<b.b-1&&b.t<a.b-1;
+function circRect(cx,cy,R,a){const x=Math.max(a.l,Math.min(cx,a.r)),y=Math.max(a.t,Math.min(cy,a.b));return Math.hypot(cx-x,cy-y)<R-1}
+function check(scr,name){
+  const issues=[],B=scr.getBoundingClientRect(),sc=B.width/286;
+  const R=el=>{const r=rel(el.getBoundingClientRect(),B);return{l:r.l/sc,t:r.t/sc,r:r.r/sc,b:r.b/sc}};
+  // overflow
+  scr.querySelectorAll('[data-ovf]').forEach(el=>{if(el.scrollWidth>el.clientWidth+1)issues.push(`${name}: текст не влезает «${el.textContent.trim().slice(0,24)}»`)});
+  // pairwise among siblings-level boxes (skip ancestor/descendant pairs)
+  const boxes=[...scr.querySelectorAll('[data-box]')].filter(el=>!el.closest('.scroll')||true);
+  for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){
+    const a=boxes[i],b=boxes[j];if(a.contains(b)||b.contains(a))continue;
+    if(inter(R(a),R(b)))issues.push(`${name}: наложение «${a.textContent.trim().slice(0,16)}» и «${b.textContent.trim().slice(0,16)}»`);}
+  // in-screen bounds (not for scroll content)
+  boxes.forEach(el=>{if(el.closest('.scroll'))return;const r=R(el);if(r.l<-1||r.t<-1||r.r>287||r.b>(scr.offsetHeight+1))issues.push(`${name}: выходит за экран «${el.textContent.trim().slice(0,16)}»`)});
+  // ring
+  scr.querySelectorAll('[data-circle]').forEach(rb=>{
+    const r=R(rb),cx=(r.l+r.r)/2,cy=(r.t+r.b)/2,OR=+rb.dataset.r,IR=+rb.dataset.ir;
+    boxes.forEach(el=>{if(rb.contains(el))return;if(circRect(cx,cy,OR,R(el)))issues.push(`${name}: кольцо задевает «${el.textContent.trim().slice(0,16)}»`)});
+    const cam=scr.querySelector('[data-cam]');if(cam&&circRect(cx,cy,OR,R(cam)))issues.push(`${name}: кольцо наезжает на камеры`);
+    const d=rb.querySelector('[data-ink]');if(d){const dr=R(d),dx=(dr.l+dr.r)/2,dy=+d.dataset.cy+r.t,iw=+d.dataset.iw,ih=+d.dataset.ih;
+      if(Math.hypot(Math.abs(dx-cx)+iw/2,Math.abs(dy-cy)+ih/2)>IR+0.5)issues.push(`${name}: цифры задевают кольцо`);}
+    const s=rb.querySelector('[data-sub]');if(s){const sr=R(s);cv.font='14px "Golos Text","Noto Sans SC"';const sw=cv.measureText(s.textContent).width;
+      const corners=[[cx-sw/2,sr.t+1],[cx+sw/2,sr.t+1],[cx-sw/2,sr.t+15],[cx+sw/2,sr.t+15]];
+      if(corners.some(([x,y])=>Math.hypot(x-cx,y-cy)>IR))issues.push(`${name}: подпись под цифрами задевает кольцо`);}
+  });
+  const cam=scr.querySelector('[data-cam]');if(cam)boxes.forEach(el=>{if(inter(R(el),R(cam)))issues.push(`${name}: «${el.textContent.trim().slice(0,16)}» под камерами`)});
+  return issues;
+}
+
+/* ================= live app ================= */
+const live={cover:'idle',screen:'menu',phase:'prep',idx:1,left:0,dur:1,paused:false,speed:1,lastShown:''};
+const phoneHost=document.getElementById('livePhoneHost'),coverHost=document.getElementById('liveCoverHost');
+let AC=null;const ac=()=>{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC};
+function tone(freq,dur,vol,type,at){const a=ac(),t=a.currentTime+(at||0),o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+0.004);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+0.02)}
+function gong(strikes){const a=ac();const parts=[[1,1],[2.41,.55],[3.88,.32],[5.57,.2],[8.12,.12]];
+  for(let s=0;s<strikes;s++)parts.forEach(([m,g])=>tone(560*m,2.6-m*0.18,0.28*g,'sine',s*0.42));vib([60,80,60])}
+const vib=p=>{if(cfg.vibr&&navigator.vibrate)navigator.vibrate(p)};
+const BUF={};
+async function loadUser(){if(!USER_SND)return;for(const k of ['user1','user2']){if(BUF[k])continue;try{const bin=Uint8Array.from(atob(USER_SND[k]),c=>c.charCodeAt(0));BUF[k]=await ac().decodeAudioData(bin.buffer)}catch(e){console.warn('sound',k,e)}}}
+function playBuf(k,maxDur){const a=ac();if(!BUF[k]){loadUser().then(()=>{if(BUF[k])playBuf(k,maxDur)});return}
+  const src=a.createBufferSource(),g=a.createGain(),t=a.currentTime;src.buffer=BUF[k];src.connect(g).connect(a.destination);g.gain.setValueAtTime(1,t);
+  if(maxDur){g.gain.setValueAtTime(1,t+maxDur-0.15);g.gain.linearRampToValueAtTime(0.0001,t+maxDur);src.start(t);src.stop(t+maxDur+0.02)}else src.start(t)}
+function noise(dur,vol,freq,at){const a=ac(),t=a.currentTime+(at||0),n=a.createBuffer(1,Math.ceil(a.sampleRate*dur),a.sampleRate),d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const src=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain();src.buffer=n;f.type='bandpass';f.frequency.value=freq;f.Q.value=6;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);src.connect(f).connect(g).connect(a.destination);src.start(t)}
+function strike(f0,at,len,vol){[[1,1],[2.41,.55],[3.88,.32],[5.57,.2],[8.12,.12]].forEach(([m,g])=>tone(f0*m,len-m*0.15,vol*g,'sine',at))}
+function osc(f,type,at,dur,peak,attack){const a=ac(),t=a.currentTime+(at||0),o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak,t+attack);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+0.05)}
+const SYN={
+ click:()=>{tone(1150,.06,.35,'sine');tone(2300,.03,.12,'triangle');noise(.02,.25,2500)},
+ beep:()=>tone(880,.11,.32),
+ dbltick:()=>{tone(2600,.02,.14,'square');tone(2600,.02,.14,'square',.12)},
+ dblbeep:()=>{tone(1000,.13,.3);tone(1000,.13,.3,'sine',.2)},
+ trill:()=>{[1100,1300,1550].forEach((f,i)=>tone(f,.08,.28,'sine',i*.09))},
+ whistle:()=>{const a=ac(),t=a.currentTime,o=a.createOscillator(),l=a.createOscillator(),lg=a.createGain(),g=a.createGain();o.frequency.value=2300;l.frequency.value=28;lg.gain.value=140;l.connect(lg).connect(o.frequency);
+   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.02);g.gain.setValueAtTime(.18,t+.38);g.gain.linearRampToValueAtTime(0.0001,t+.45);o.connect(g).connect(a.destination);o.start(t);l.start(t);o.stop(t+.5);l.stop(t+.5)},
+ tick:()=>{tone(3000,.015,.12,'square');tone(1500,.03,.2)},
+ lowbeep:()=>tone(520,.16,.38),
+ bell3:()=>{for(let i=0;i<3;i++)strike(560,i*.42,2.6,.28)},
+ bell1:()=>strike(560,0,2.6,.28),
+ dblhit:()=>{strike(700,0,2.2,.26);strike(700,.28,2.2,.26)},
+ gongdeep:()=>{[[110,1],[111.6,.8],[163,.45],[231,.3],[297,.2],[388,.12]].forEach(([f,g])=>osc(f,'sine',0,5,.32*g,.03))},
+ horn:()=>{const a=ac(),t=a.currentTime,f=a.createBiquadFilter(),g=a.createGain();f.type='lowpass';f.frequency.value=1800;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.16,t+.02);g.gain.setValueAtTime(.16,t+.85);g.gain.linearRampToValueAtTime(0.0001,t+.95);
+   [220,233].forEach(fr=>{const o=a.createOscillator();o.type='sawtooth';o.frequency.value=fr;o.connect(f);o.start(t);o.stop(t+1)});f.connect(g).connect(a.destination)},
+};
+function playSnd(id,short){if(id==='none')return;if(id.startsWith('u:')){playUser(id,short);return}if(id==='user1'||id==='user2')playBuf(id,short);else SYN[id]()}
+function playAction(k){const a=ACTIONS.find(x=>x.k===k);if(!cfg.mute)playSnd(cfg.snd[k],a.short);vib({interval:30,warn:[40,60,40],count:25,endRound:[60,80,60],endRest:[60,80,60]}[k])}
+const sig={interval:()=>playAction('interval'),warn:()=>playAction('warn'),count:()=>playAction('count')};
+function click(strong){if(!cfg.mute)try{tone(strong?2400:1800,.012,strong?.12:.06,'square')}catch(e){};if(navigator.vibrate)navigator.vibrate(strong?18:8)}
+
+function screenHTML(){const x=live.screen==='run'?null:scrOf(live.screen);return x?x.html(tgt(),live.screen):scrRun(vLive(),cfg)}
+function navBack(){const b=backOf(live.screen);if(b){live.screen=b;renderAll();return true}return false}
+function vLive(){return{screen:live.screen,phase:live.phase,idx:live.idx,left:live.left,dur:live.dur,paused:live.paused}}
+function renderPhone(){
+  const inner=screenHTML();
+  const st=phoneHost.querySelector('.scroll')?.scrollTop||0;
+  phoneHost.innerHTML=`<div class="scaler" style="transform:scale(1.2);width:360px;height:880px">${phoneHTML(inner,cfg)}</div>`;
+  phoneHost.style.width='360px';phoneHost.style.height='880px';
+  const sc=phoneHost.querySelector('.scroll');if(sc)sc.scrollTop=st;
+}
+function renderCover(){
+  coverHost.innerHTML=`<div class="scaler" style="transform:scale(1.2);width:360px;height:375px">${coverHTML(coverInner(),cfg)}</div>`;
+  coverHost.style.width='360px';coverHost.style.height='375px';
+}
+function renderAll(){renderPhone();renderCover()}
+
+function setPhase(ph){live.phase=ph;live.dur=ph==='prep'?cfg.prep:ph==='round'?cfg.round:ph==='rest'?cfg.rest:1;live.left=live.dur}
+function coverInner(){return live.screen!=='run'&&live.cover==='setup'?scrCoverSetup(cfg):scrCover(vLive(),cfg)}
+function startWorkout(){ac();live.cover='idle';live.screen='run';live.idx=1;live.paused=false;if(cfg.prep>0)setPhase('prep');else{setPhase('round');}renderAll()}
+function onSecond(s){ // s = whole seconds remaining just reached
+  if(live.phase==='round'){
+    if(s===0)return;
+    const isCount=cfg.countOn&&s<=cfg.count;
+    if(isCount){sig.count();return}
+    if(cfg.warnOn&&s===cfg.warn){sig.warn();pulse();return}
+    const el=live.dur-s;if(cfg.everyOn&&el>0&&el%cfg.every===0&&!(cfg.warnOn&&s<cfg.warn))sig.interval();
+  }else if(live.phase==='prep'){if(cfg.countOn&&s<=Math.min(cfg.count,3)&&s>0)sig.count()}
+}
+function pulse(){const r=phoneHost.querySelector('.ringsvg');if(r){r.classList.remove('pulse');void r.offsetWidth;r.classList.add('pulse')}}
+function endPhase(){
+  if(live.phase==='prep'){playAction('endRest');setPhase('round')}
+  else if(live.phase==='round'){playAction('endRound');if(live.idx>=cfg.rounds){live.phase='done';live.left=0;live.dur=1}else setPhase('rest')}
+  else if(live.phase==='rest'){playAction('endRest');live.idx++;setPhase('round')}
+}
+let lastT=performance.now();
+setInterval(()=>{
+  const now=performance.now(),dt=(now-lastT)/1000;lastT=now;
+  if(live.screen!=='run'||live.paused||live.phase==='done')return;
+  const prev=live.left;live.left-=dt*live.speed;
+  for(let s=Math.ceil(prev)-1;s>=Math.max(0,Math.ceil(live.left));s--){onSecond(s)}
+  if(live.left<=0){endPhase()}
+  const key=live.phase+live.idx+Math.ceil(live.left)+live.paused;
+  if(key!==live.lastShown){live.lastShown=key;renderPhone();renderCover();if(phaseInfo(vLive(),cfg).warn&&!isBig(vLive(),cfg)&&Math.ceil(live.left)===cfg.warn)pulse();if(isBig(vLive(),cfg))pulse()}
+},50);
+
+/* ---- clicks ---- */
+phoneHost.addEventListener('click',e=>{
+  phoneClick(e);
+});
+function phoneClick(e){
+  for(const h of CLICK){if(h(e)){changed();return}}
+  const a=e.target.closest('[data-act]');
+  if(a){const act=a.dataset.act;
+    if(act==='back'){navBack();return}
+    if(act.startsWith('go:')){live.screen=act.slice(3)}
+    else if(act==='mute'){cfg.mute=!cfg.mute;changed()}
+    else if(act.startsWith('snd:')){live.screen=act}
+    else if(act==='settings'){live.screen='settings'}else if(act==='menu'){live.screen='menu'}else if(act==='fonts'){live.screen='fonts'}
+    else if(act==='start'){startWorkout();return}
+    else if(act==='pause'){live.paused=!live.paused}
+    else if(act==='stop'){live.screen='menu'}
+    renderAll();return}
+  const pl=e.target.closest('[data-play]');if(pl){const[k,o]=pl.dataset.play.split(':');playSnd(o,ACTIONS.find(a=>a.k===k).short);return}
+  const pk=e.target.closest('[data-pick]');if(pk){const[k,o]=pk.dataset.pick.split(':');tgt().snd[k]=o;playSnd(o,ACTIONS.find(a=>a.k===k).short);changed();renderPhone();return}
+  const pr=e.target.closest('[data-preset]');if(pr){cfg.round=+pr.dataset.preset;click(true);changed();renderAll();return}
+  const tg=e.target.closest('[data-tg]');if(tg){const c=tgt();c[tg.dataset.tg]=!c[tg.dataset.tg];changed();renderPhone();return}
+  const cy=e.target.closest('[data-cyc]');if(cy){const k=cy.dataset.cyc,l=CYCLE[k],c=tgt();c[k]=l[(l.indexOf(c[k])+1)%l.length];changed();renderPhone();return}
+  const lg=e.target.closest('[data-lang]');if(lg){tgt().lang=lg.dataset.lang;changed();renderAll();return}
+  const fo=e.target.closest('[data-font]');if(fo){tgt().font=fo.dataset.font;changed();renderAll();return}
+  const vl=e.target.closest('[data-val]');if(vl&&!vl.querySelector('input'))editVal(vl);
+}
+function coverTap(e){
+  if(e&&e.target.closest('[data-step]'))return;
+  const ca=e&&e.target.closest('[data-cact]');
+  if(ca&&ca.dataset.cact==='stop'){live.screen='menu';live.paused=false;live.cover='idle';click(false);renderAll();return}
+  if(ca){live.cover=ca.dataset.cact==='setup'?'setup':'idle';click(false);renderAll();return}
+  if(live.screen!=='run'&&live.cover==='setup')return;
+  ac();if(live.screen!=='run'){startWorkout()}else if(live.phase==='done'){live.screen='menu';renderAll()}else{live.paused=!live.paused;renderAll()}
+}
+coverHost.addEventListener('click',coverTap);
+function stepVal(k,dir){
+  const s=SL[k],st=s.snap||CSTEP[k];let v=cfg[k];
+  if(dir>0&&v>=s.max||dir<0&&v<=s.min)return; // кламп по настройкам; значение с клавиатуры сверх максимума «+» не трогает
+  v=dir>0?Math.floor(v/st)*st+st:Math.ceil(v/st)*st-st;v=Math.min(s.max,Math.max(s.min,v));
+  if(v===cfg[k])return;cfg[k]=v;click(s.time?v%60===0:false);
+  const el=coverHost.querySelector(`[data-cval="${k}"]`);if(el)el.textContent=k==='rounds'?v:fmt(v);
+  renderPhone();changed();
+}
+let hold=null;
+const holdStop=()=>{if(hold){clearTimeout(hold.t);hold=null}};
+coverHost.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('[data-step]');if(!b)return;e.preventDefault();ac();
+  const [k,d]=b.dataset.step.split(':');holdStop();stepVal(k,+d);let n=0;
+  const rep=()=>{if(!hold)return;stepVal(k,+d);n++;hold.t=setTimeout(rep,n>8?60:120)};
+  hold={t:setTimeout(rep,420)};
+});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>coverHost.addEventListener(ev,holdStop));
+document.getElementById('spd').addEventListener('click',e=>{live.speed=live.speed===1?10:1;e.target.classList.toggle('on',live.speed>1)});
+
+// Строка в секунды: «1:30:00», «1:30», «130» (= 1:30), «45». fb — если ничего не ввели.
+function parseTime(str,k,fb){
+  if(fb===undefined)fb=cfg[k];str=String(str).trim();
+  if(k==='rounds'){const n=parseInt(str.replace(/\D/g,''));return isNaN(n)?fb:n}
+  if(str.includes(':')){const p=str.split(':').map(x=>parseInt(x)||0);while(p.length<3)p.unshift(0);return p[0]*3600+p[1]*60+p[2]}
+  const d=str.replace(/\D/g,'');if(!d)return fb;
+  if(d.length<=2)return parseInt(d);
+  return parseInt(d.slice(0,-2))*60+parseInt(d.slice(-2));
+}
+// Ввод с клавиатуры: три поля ч : мин : с поверх поля меню (для раундов одно). Максимума ползунка нет, лишнее нормализуется: 90 мин = 1:30:00.
+function editVal(vl){
+  const k=vl.dataset.val,fld=vl.closest('.field');if(!fld||fld.querySelector('.kb'))return;fld.classList.add('edit');
+  const t=T[cfg.lang],v=cfg[k],p2=n=>String(n).padStart(2,'0');
+  const box=(n,val,cap,w)=>`<label class="kbu"><input data-kb="${n}" inputmode="numeric" autocomplete="off" value="${val}"${w?` style="width:${w}px"`:''}><small>${cap}</small></label>`;
+  const h=k==='rounds'?box('n',v,t.rounds,90):
+    box('h',Math.floor(v/3600),t.uH)+'<span class="kbc df">:</span>'+box('m',p2(Math.floor(v%3600/60)),t.uM)+'<span class="kbc df">:</span>'+box('s',p2(v%60),t.uS);
+  fld.insertAdjacentHTML('beforeend',`<div class="kb">${h}<span class="kbok" data-kbok><i class="ph-bold ph-check"></i></span></div>`);
+  const kb=fld.querySelector('.kb'),ins=[...kb.querySelectorAll('input')],num=n=>{const i=kb.querySelector(`[data-kb="${n}"]`);return i?(parseInt(i.value.replace(/\D/g,''))||0):0};
+  let fin=false;
+  const done=()=>{if(fin)return;fin=true;
+    if(k==='rounds')cfg[k]=Math.min(99,Math.max(1,num('n')));
+    else cfg[k]=Math.min(359999,Math.max(k==='round'?1:0,num('h')*3600+num('m')*60+num('s')));
+    changed();renderAll()};
+  const first=k==='rounds'?ins[0]:(v>=3600?ins[0]:ins[1]);first.focus();first.select();
+  ins.forEach(i=>{i.addEventListener('focus',()=>i.select());
+    i.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();done()}if(ev.key==='Escape'){fin=true;renderAll()}});
+    i.addEventListener('input',()=>{if(i.dataset.kb==='m'&&i.value.replace(/\D/g,'').length>=2){const s=kb.querySelector('[data-kb="s"]');s.focus()}})});
+  kb.addEventListener('focusout',()=>setTimeout(()=>{if(!kb.contains(document.activeElement))done()},0));
+  kb.addEventListener('pointerdown',ev=>{if(ev.target.closest('[data-kbok]')){ev.preventDefault();done()}});
+}
+
+/* ---- magnet slider ---- */
+let drag=null;
+phoneHost.addEventListener('pointerdown',e=>{
+  for(const h of PDOWN){if(h(e))return}
+  const sl=e.target.closest('[data-slider]');if(!sl)return;e.preventDefault();ac();
+  const k=sl.dataset.slider;sl.setPointerCapture(e.pointerId);
+  drag={k,sl,fine:false,fx:0,fv:0};moveDrag(e);
+});
+phoneHost.addEventListener('pointermove',e=>{if(drag)moveDrag(e)});
+const endDrag=()=>{if(!drag)return;drag.sl.classList.remove('finemode');drag=null;changed();renderAll()};
+phoneHost.addEventListener('pointerup',endDrag);phoneHost.addEventListener('pointercancel',endDrag);
+function moveDrag(e){
+  const {k,sl}=drag,s=SL[k],tr=sl.querySelector('.tr').getBoundingClientRect(),scale=tr.width/254;
+  const dy=Math.abs(e.clientY-(tr.top+tr.height/2))/scale;
+  let v=cfg[k];
+  const wantFine=s.time&&dy>40;
+  if(wantFine&&!drag.fine){drag.fine=true;drag.fx=e.clientX;drag.fv=cfg[k];sl.classList.add('finemode')}
+  if(!wantFine&&drag.fine){drag.fine=false;sl.classList.remove('finemode')}
+  if(drag.fine){v=drag.fv+Math.round((e.clientX-drag.fx)/(9*scale))}
+  else{const p=Math.min(1,Math.max(0,(e.clientX-tr.left)/tr.width));v=Math.round((s.min+p*(s.max-s.min))/s.snap)*s.snap}
+  v=Math.min(s.max,Math.max(s.min,v));
+  if(v!==cfg[k]){cfg[k]=v;const strong=s.time?(v%60===0):false;click(strong);updateField(k,true)}
+}
+function updateField(k,snap){
+  const s=SL[k],fld=phoneHost.querySelector(`[data-field="${k}"]`);if(!fld)return;
+  const p=limPct(k,cfg[k]);
+  fld.querySelector('.f').style.width=p+'%';const kn=fld.querySelector('.k');kn.style.left=p+'%';
+  kn.classList.toggle('fine',!!(drag&&drag.fine));
+  if(snap){kn.classList.add('snap');clearTimeout(kn._t);kn._t=setTimeout(()=>kn.classList.remove('snap'),90)}
+  fld.querySelector('[data-val]').textContent=k==='rounds'?cfg[k]:fmt(cfg[k]);
+  fld.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('on',+x.dataset.q.split(':')[1]===cfg[k]));
+  const tot=phoneHost.querySelector('[data-tot]');if(tot)tot.textContent=fmt(cfg.prep+cfg.rounds*cfg.round+(cfg.rounds-1)*cfg.rest);
+  renderCover();
+}
+
+/* ================= board ================= */
+const boardHost=document.getElementById('board');
+let boardLang='ru';
+function testViews(c){
+  const t=T[c.lang];
+  const cc={...c,round:600,count:10,rounds:12};
+  return [
+   {k:'menu',title:'Меню',kind:'phone',html:scrMenu(cc),c:cc},
+   {k:'round',title:'Раунд 10:00',kind:'phone',html:scrRun({screen:'run',phase:'round',idx:4,left:587,dur:600},cc),c:cc},
+   {k:'warn',title:'Последние секунды',kind:'phone',html:scrRun({screen:'run',phase:'round',idx:4,left:10,dur:600},cc),c:cc},
+   {k:'prep',title:'Подготовка',kind:'phone',html:scrRun({screen:'run',phase:'prep',idx:1,left:7,dur:10},cc),c:cc},
+   {k:'rest',title:'Отдых',kind:'phone',html:scrRun({screen:'run',phase:'rest',idx:4,left:41,dur:60},cc),c:cc},
+   {k:'pause',title:'Пауза',kind:'phone',html:scrRun({screen:'run',phase:'round',idx:4,left:432,dur:600,paused:true},cc),c:cc},
+   {k:'settings',title:'Настройки',kind:'phone',html:scrSettings(cc),c:cc},
+   {k:'fonts',title:'Список шрифтов',kind:'phone',html:scrFonts(cc),c:cc},
+   ...ACTIONS.map(a=>({k:'snd'+a.k,title:'Звук: '+T.ru[a.t].toLowerCase(),kind:'phone',html:scrSound(cc,a.k),c:cc})),
+   {k:'cidle',title:'Внешний: ожидание',kind:'cover',html:scrCover({screen:'menu'},cc),c:cc},
+   {k:'csetup',title:'Внешний: настройка',kind:'cover',html:scrCoverSetup(cc),c:cc},
+   {k:'cprep',title:'Внешний: подготовка',kind:'cover',html:scrCover({screen:'run',phase:'prep',idx:1,left:7,dur:10},cc),c:cc},
+   {k:'cround',title:'Внешний: раунд',kind:'cover',html:scrCover({screen:'run',phase:'round',idx:4,left:587,dur:600},cc),c:cc},
+   {k:'cwarn',title:'Внешний: отсчёт',kind:'cover',html:scrCover({screen:'run',phase:'round',idx:4,left:10,dur:600},cc),c:cc},
+   {k:'crest',title:'Внешний: отдых',kind:'cover',html:scrCover({screen:'run',phase:'rest',idx:4,left:41,dur:60},cc),c:cc},
+   {k:'cpause',title:'Внешний: пауза',kind:'cover',html:scrCover({screen:'run',phase:'round',idx:4,left:432,dur:600,paused:true},cc),c:cc},
+   {k:'sounds',title:'Звуки',kind:'phone',html:scrSounds(cc),c:cc},
+   ...EXTRA_VIEWS.flatMap(f=>f(cc)),
+  ];
+}
+const SHOW=['round','warn','prep','settings','sndendRound','cidle','csetup','cround','cwarn'];
+function runAllChecks(){
+  const tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-5000px;top:0';document.body.appendChild(tmp);
+  const res={};
+  for(const f of FONTS)for(const [lg] of LANGS){
+    const c={...cfg,font:f.id,lang:lg};const list=[];
+    for(const v of testViews(c)){tmp.innerHTML=v.kind==='phone'?phoneHTML(v.html,c):coverHTML(v.html,c);
+      list.push(...check(tmp.querySelector('.scr'),v.title));}
+    res[f.id+lg]=list;
+  }
+  tmp.remove();return res;
+}
+function drawBoard(res){
+  // summary
+  let h=`<table class="sum"><thead><tr><th>Шрифт</th>${LANGS.map(([,n])=>`<th>${n}</th>`).join('')}</tr></thead><tbody>`;
+  const all=[];
+  for(const f of FONTS){h+=`<tr><td style="font-family:${f.css}${FB};font-weight:${f.w};font-size:17px">${f.name}${f.note?` <span style="font-family:'Golos Text';font-weight:400;font-size:13px;color:#62666c">${f.note}</span>`:''}</td>`;
+    for(const [lg,n] of LANGS){const l=res[f.id+lg];h+=`<td>${l.length?`<span class="badb">${l.length}</span>`:'<span class="okb">чисто</span>'}</td>`;l.forEach(x=>all.push(`${f.name}, ${n}. ${x}`))}h+='</tr>'}
+  h+='</tbody></table>';
+  if(all.length)h+=`<div class="issues">${all.join('<br>')}</div>`;
+  document.getElementById('summary').innerHTML=h;
+  // lang buttons
+  document.getElementById('boardLang').innerHTML='<span>Язык на картинках:</span>'+LANGS.map(([k,n])=>`<button data-bl="${k}" class="${k===boardLang?'on':''}">${n}</button>`).join('');
+  // frames
+  let b='';
+  for(const f of FONTS){const c={...cfg,font:f.id,lang:boardLang};const vs=testViews(c).filter(v=>SHOW.includes(v.k));
+    const n=res[f.id+boardLang].length;
+    b+=`<div class="fontrow"><h3 style="font-family:${f.css}${FB};font-weight:${f.w}">${f.name} ${n?`<span class="badb">${n}</span>`:'<span class="okb">чисто</span>'}</h3><div class="row">`+
+      vs.map(v=>`<figure>${v.kind==='phone'?phoneHTML(v.html,c):coverHTML(v.html,c)}<figcaption>${v.title}</figcaption></figure>`).join('')+'</div></div>';}
+  boardHost.innerHTML=b;
+}
+let RES=null;
+document.getElementById('boardLang').addEventListener('click',e=>{const b=e.target.closest('[data-bl]');if(b){boardLang=b.dataset.bl;drawBoard(RES)}});
+
+/* ================= boot ================= */
+(async()=>{
+  const sample='0123456789:РАУНДОТЫХПРИГОВЬСЯГЕSTARDYUNDPOSE回合休息准备暂停完成开始';
+  await Promise.all(FONTS.flatMap(f=>[document.fonts.load(`${f.w} 100px ${f.css}`,sample)]).concat([
+    document.fonts.load('500 14px "Golos Text"','Раунд'),document.fonts.load('700 14px "Noto Sans SC"','回合休息准备暂停完成开始训练设置')]));
+  await document.fonts.ready;
+  loadCfg();renderAll();
+  RES=runAllChecks();drawBoard(RES);
+  window.__RES=RES;
+})();
+</script>
+</body>
+</html>
