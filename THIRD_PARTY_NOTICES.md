@@ -21,4 +21,4 @@ Phosphor Icons in `app/web/ph/` (https://phosphoricons.com) are licensed under t
 
 ## Sounds
 
-Gong 1 and Gong 2 in the Google Play version come from Zvukipro.com and are not part of this repository. All other sounds are synthesized by the app at runtime.
+Gong 1 and Gong 2 in the Google Play version come from Zvukipro.com (download page: https://zvukipro.com/sport/577-zvuki-boksa.html) and are not part of this repository. All other sounds are synthesized by the app at runtime.

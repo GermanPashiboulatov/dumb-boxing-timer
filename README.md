@@ -58,7 +58,7 @@ python -m http.server 8765 --directory app/web
 
 ## Gong sounds
 
-The Google Play version has two extra sounds, Gong 1 and Gong 2, from [Zvukipro.com](https://zvukipro.com). The site does not allow redistributing its files, so they are not in this repository. `build_web.py` picks them up from `concepts/sounds/gongs.js` if that file exists. Without it the app builds without these two sounds and uses its own synthesized gong and bell by default.
+The Google Play version has two extra sounds, Gong 1 and Gong 2, from [Zvukipro.com](https://zvukipro.com). They can be downloaded from this page: https://zvukipro.com/sport/577-zvuki-boksa.html. The site does not allow redistributing its files, so they are not in this repository. `build_web.py` picks them up from `concepts/sounds/gongs.js` if that file exists. Without it the app builds without these two sounds and uses its own synthesized gong and bell by default.
 
 ## License
 
